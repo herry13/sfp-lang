@@ -1,46 +1,84 @@
 package org.lang.sfp
 
 import scala.util.parsing.combinator.JavaTokenParsers
+import org.sf.lang.Store
+import org.sf.lang.Reference
 
 class ValueSystem extends JavaTokenParsers {
   protected override val whiteSpace = """(\s|//.*|(?m)/\*(\*(?!/)|[^*])*\*/)+""".r
   
-  def Sfp: Parser[Any] =
-    SpecificationItem
-  
-  def SpecificationItem: Parser[Any] =
-    ( Assignment ~ SpecificationItem
-    | Schema ~ SpecificationItem
-    | GlobalConstraint ~ SpecificationItem
-    | epsilon
+  def Sfp: Parser[Store] =
+    SpecificationItem ^^ (si =>
+      ((v: Any) =>
+        if (v.isInstanceOf[Store]) v.asInstanceOf[Store]
+        else throw new Exception("missing main object")
+      )(si(org.sf.lang.Reference.Empty)(org.sf.lang.Store.Empty).accept(org.sf.lang.Store.replaceLink).find(new Reference("main")))
     )
   
-  def Body: Parser[Any] =
+  def SpecificationItem: Parser[Reference => Store => Store] =
+    ( Assignment ~ SpecificationItem ^^ { case a ~ si => (ns: Reference) => (s: Store) => si(ns)(a(ns)(s)) }
+    | Schema ~ SpecificationItem ^^ { case sc ~ si => (ns: Reference) => (s: Store) => si(ns)(sc(s)) }
+    | GlobalConstraint ~ SpecificationItem ^^ { case g ~ si => (ns: Reference) => (s: Store) => si(ns)(g(s)) }
+    | epsilon ^^ (x => (ns: Reference) => (s: Store) => s)
+    )
+  
+  def Body: Parser[Reference => Store => Store] =
     begin ~>
-    ( Assignment ~ Body
-    | epsilon
+    ( Assignment ~ Body ^^ { case a ~ b => (ns: Reference) => (s: Store) => b(ns)(a(ns)(s)) }
+    | epsilon ^^ (x => (ns: Reference) => (s: Store) => s)
     ) <~ end
   
-  def Assignment: Parser[Any] =
-    Reference ~ SFPValue <~ eos
+  def Assignment: Parser[Reference => Store => Store] =
+    Reference ~ SFPValue <~ eos ^^ {
+      case r ~ v =>
+        (ns: Reference) => (s: Store) =>
+          if (r.length == 1) v(ns)(ns ++ r)(s)
+          else
+            ((l: (Reference, Any)) =>
+              if (l._2.isInstanceOf[Store]) v(ns)(l._1 ++ r)(s)
+              else throw new Exception("prefix of " + r + " is not a store")
+            )(s.resolve(ns, r.prefix))
+    }
   
-  def SFPValue: Parser[Any] =
-    ( eq ~> BasicValue
-    | LinkReference
-    | Isa ~ Prototype
-    | Type
-    | Action
+  def SFPValue: Parser[Reference => Reference => Store => Store] =
+    ( eq ~> BasicValue ^^ (bv =>
+        (ns: Reference) => (r: Reference) => (s: Store) => s.bind(r, bv)
+      )
+    | LinkReference ^^ (lr =>
+        (ns: Reference) => (r: Reference) => (s: Store) => s.bind(r, lr)
+      )
+    | Isa ~ Prototype ^^ { case ss ~ p =>
+        (ns: Reference) => (r: Reference) => (s: Store) =>
+          p(ns)(r)(ss(r)(s.bind(r, org.sf.lang.Store.Empty)))
+      }
+    | Type ^^ (t =>
+        (ns: Reference) => (r: Reference) => (s: Store) => s.bind(r, t)
+      )
+    | Action ^^ (ac =>
+        (ns: Reference) => (r: Reference) => (s: Store) => s.bind(r, ac)
+      )
     )
   
-  def Isa: Parser[Any] =
-    ( "isa" ~> rep1sep(ident, ",")
-    | epsilon
+  def Isa: Parser[Reference => Store => Store] =
+    ( "isa" ~> rep1sep(ident, ",") ^^ (ss => schemata(ss)
+      )
+    | epsilon ^^ (x => (r: Reference) => (s: Store) => s)
     )
     
-  def Prototype: Parser[Any] =
-    ( "extends" ~> Reference ~ Prototype
-    | Body ~ Prototype
-    | epsilon
+  def Prototype: Parser[Reference => Reference => Store => Store] =
+    ( "extends" ~> Reference ~ Prototype ^^ {
+        case ref ~ p =>
+          (ns: Reference) => (r: Reference) => (s: Store) =>
+            p(ns)(r)(s.inherit(ns, ref, r))
+      }
+    | Body ~ Prototype ^^ {
+        case b ~ p =>
+          (ns: Reference) => (r: Reference) => (s: Store) =>
+            p(ns)(r)(b(r)(s))
+      }
+    | epsilon ^^ (x =>
+        (ns: Reference) => (r: Reference) => (s: Store) => s
+      )
     )
   
   def BasicValue: Parser[Any] =
@@ -58,20 +96,36 @@ class ValueSystem extends JavaTokenParsers {
   def DataReference: Parser[Any] =
     "DATA" ~> Reference
  
-  def Reference: Parser[Any] =
-    rep1sep(ident, ".") ^^ (r => ???)
+  def Reference: Parser[Reference] =
+    rep1sep(ident, ".") ^^ (r => org.sf.lang.Reference(r))
   
-  def Schema: Parser[Any] =
-    "schema" ~> ident <~ Super ~ Body
+  def Schema: Parser[Store => Store] =
+    "schema" ~> ident ~ Super ~ Body ^^ { case id ~ ss ~ b =>
+      (s: Store) =>
+        ((r: Reference) =>
+          b(r)(ss(r)(s.bind(r, org.sf.lang.Store.Empty)))
+        )(new Reference(id))
+    }
   
-  def Super: Parser[Any] =
-    ( "extends" ~> rep1sep(ident, ",")
-    | epsilon
+  def Super: Parser[Reference => Store => Store] =
+    ( "extends" ~> rep1sep(ident, ",") ^^ (ss => schemata(ss))
+    | epsilon ^^ (x => (r: Reference) => (s: Store) => s)
     )
+  
+  private def schemata(ss: List[String]): Reference => Store => Store =
+    (r: Reference) => (s: Store) =>
+      ss.foldRight[Store](s)((id: String, s1: Store) =>
+        s1.inherit(org.sf.lang.Reference.Empty, new Reference(id), r)
+      )
     
   def Type: Parser[Any] =
     ":" ~>
-    ( ident
+    ( ident ^^ (id =>
+        if (id.equals(TypeSystem.bool)) false
+        else if (id.equals(TypeSystem.num)) 0
+        else if (id.equals(TypeSystem.str)) ""
+        else org.sf.lang.Store.Empty
+      )
     | TypeList
     | TypeRef
     )
@@ -79,16 +133,16 @@ class ValueSystem extends JavaTokenParsers {
   def TypeRef: Parser[Any] =
     ( "@" ~> ident
     | "@" ~> TypeList
-    )
+    ) ^^ (x => null)
     
   def TypeList: Parser[Any] =
-    "[" ~> ident <~ "]"
+    "[" ~> ident <~ "]" ^^ (x => List())
    
-  def GlobalConstraint: Parser[Any] =
-    "global" ~> ???
+  def GlobalConstraint: Parser[Store => Store] =
+    "global" ~> ??? //TODO
   
   def Action: Parser[Any] =
-    "def" ~> ???
+    "def" ~> ??? //TODO
   
   protected val intRegex = """\-?[0-9]+(?!\.)""".r
 
