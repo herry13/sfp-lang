@@ -1,0 +1,11 @@
+a = 1
+b a
+
+x { }
+schema A
+y isa A
+//y := a
+y extends {
+	a = 1
+}
+

@@ -1,1 +1,4 @@
 /bin
+/.cache
+/.worksheet
+*.swp

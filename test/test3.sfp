@@ -1,0 +1,56 @@
+schema X {
+	y = true
+}
+a isa x , y {
+	b = 1
+}
+c extends a {
+	x = 1
+}
+
+d = 1
+d {
+	e = 1
+}
+
+//d a
+/*d {
+	e = "test"
+}*/
+/*X {
+	y = true
+}*/
+//X.a = 1
+/*d.e = "test"
+d.f {
+	g = true
+}*/
+
+/*schema X {
+	c = true
+	//b = true
+}
+
+a extends X {
+	b {
+		f = 1
+	}
+}
+a {
+	//b = 1
+	b.f = 3
+}
+d extends a {
+	e = "str"
+}
+
+schema Y
+h extends X
+a = h
+
+g extends Y
+//a = g
+
+a
+
+*/

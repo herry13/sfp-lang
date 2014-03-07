@@ -1,4 +1,4 @@
-package org.lang.sfp
+package org.sfp
 
 import scala.util.parsing.combinator.JavaTokenParsers
 import org.sf.lang.Reference

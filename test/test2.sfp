@@ -1,0 +1,11 @@
+schema A {
+	a = 2
+	b = true
+	//d { }
+}
+schema B extends A,C {
+	a = 1
+	c = "test"
+	//b = 1
+}
+//schema C extends D

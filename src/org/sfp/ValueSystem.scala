@@ -1,4 +1,4 @@
-package org.lang.sfp
+package org.sfp
 
 import scala.util.parsing.combinator.JavaTokenParsers
 import org.sf.lang.Store
@@ -139,7 +139,7 @@ class ValueSystem extends JavaTokenParsers {
     "[" ~> ident <~ "]" ^^ (x => List())
    
   def GlobalConstraint: Parser[Store => Store] =
-    "global" ~> ??? //TODO
+    "global" ~> ??? // TODO
   
   def Action: Parser[Any] =
     "def" ~> ??? //TODO
@@ -164,6 +164,33 @@ class ValueSystem extends JavaTokenParsers {
     ( "true" ^^ (x => true)
     | "false" ^^ (x => false)
     )  
+
+  //--- constraints ---//
+  def Conjunction: Parser[Any] =
+    begin ~ ConstraintStatement.* ~ end
+
+  def Disjunction: Parser[Any] =
+    ConstraintStatement.*
+    
+  def ConstraintStatement: Parser[Any] =
+    ( Equal
+    | NotEqual
+    | MemberOfList
+    ) <~ eos
+  
+  def Implication: Parser[Any] = ???
+    
+  def Negation: Parser[Any] =
+    not ~ ConstraintStatement
+  
+  def Equal: Parser[Any] =
+    Reference ~ eq ~ BasicValue
+    
+  def NotEqual: Parser[Any] =
+    Reference ~ neq ~ BasicValue
+    
+  def MemberOfList: Parser[Any] =
+    Reference ~ in ~ Vector
     
   val epsilon: Parser[Any] = ""
     
@@ -173,6 +200,8 @@ class ValueSystem extends JavaTokenParsers {
   
   val in: Parser[Any] = "in"
   
+  val not: Parser[Any] = "not" | "!"
+    
   val begin: Parser[Any] = "{"
     
   val end: Parser[Any] = "}"
