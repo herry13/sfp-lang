@@ -2,7 +2,7 @@
 
 open Domain
 
-let ref_main = ["main"]
+let ref_main = []
 
 %}
 
@@ -13,7 +13,10 @@ let ref_main = ["main"]
 %token <string> ID
 %token <string> INCLUDE
 %token <string list -> Domain.store -> Domain.store> SFP_INCLUDE
-%token MERGE EXTENDS COMMA DATA BEGIN END SEP NULL LBRACKET RBRACKET EOS EOF
+%token NULL
+%token SCHEMA ISA GLOBAL
+%token MERGE EXTENDS
+%token COMMA DATA BEGIN END SEP LBRACKET RBRACKET EOS EOF
 %token EQ NEQ IN IF ELSE
 
 %start sfp included  /* entry points: sfp -> main file, included -> included file */
@@ -22,16 +25,43 @@ let ref_main = ["main"]
 
 %%
 sfp:
-    | body EOF {
-                 let s = $1 [] [] in
-                 let v = find s ref_main in
-                 match v with
-                 | Val (Store main) -> main
-                 | _ -> raise (Failure "[err7]")
-               }
+    | statements EOF {
+                       let s = $1 [] [] in
+                       let v = find s ref_main in
+                       match v with
+                       | Val (Store main) -> main
+                       | _ -> raise (Failure "[err7]")
+                     }
 
 included:
-    | body EOF   { $1 }
+    | statements EOF   { $1 }
+
+statements:
+    | SCHEMA schema statements  { fun ns s -> $3 ns ($2 ns s) }
+    /*| GLOBAL _constraint        { $1 }*/
+    | body statements           { fun ns s -> $2 ns ($1 ns s) }
+    |                           { fun ns s -> s }
+/*
+_constraint:
+    | BEGIN c_and END
+
+c_and:
+    | c_equals      
+    | c_not_equals
+
+c_equals:
+    | reference EQ basic EOS
+
+c_not_equals:
+    | reference NEQ basic EOS
+*/
+schema:
+    | ID parent BEGIN body END  { fun ns s -> let r = [$1] in
+                                              $4 r ($2 r s) }
+
+parent:
+    | EXTENDS ID  { fun r s -> inherit_proto (bind s r (Store [])) [] [$2] r }
+    |             { fun r s -> bind s r (Store []) }
 
 body:
     | assignment body     { fun ns s -> $2 ns ($1 ns s) }
@@ -48,15 +78,23 @@ assignment:
     | reference value       { fun ns s -> $2 ns (List.append ns $1) s }
 
 value:
-	| EQ basic EOS          { fun ns r s -> bind s r $2 }
-    | EXTENDS prototypes    { fun ns r s -> $2 ns r (bind s r (Store [])) }
-    | link_reference EOS    {
-                              fun ns r s -> let (_, v1) = resolve s ns $1 in
-                                            match v1 with
-                                            | Undefined -> raise (Failure "[err5]")
-                                            | Val v -> bind s r v
-                            }
-    | BEGIN body END        { fun ns r s -> $2 r (bind s r (Store [])) (* syntactic sugar *) }
+	| EQ basic EOS
+      { fun ns r s -> bind s r $2 }
+    | isa EXTENDS prototypes
+      { fun ns r s -> $3 ns r ($1 r s) }
+    | link_reference EOS
+      {
+        fun ns r s -> let (_, v1) = resolve s ns $1 in
+                      match v1 with
+                      | Undefined -> raise (Failure "[err5]")
+                      | Val v -> bind s r v
+      }
+    | isa BEGIN body END  /* syntactic sugar */
+      { fun ns r s -> $3 r ($1 r s) }
+
+isa:
+	| ISA ID  { fun r s -> inherit_proto (bind s r (Store [])) [] [$2] r }
+	|         { fun r s -> bind s r (Store []) }
 
 prototypes:
     | prototype COMMA prototypes { fun ns r s -> $3 ns r ($1 ns r s) }

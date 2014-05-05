@@ -1,0 +1,5 @@
+schema X { b = 2; }
+main {
+	a = 1;
+	b extends X
+}

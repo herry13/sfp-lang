@@ -16,6 +16,9 @@ rule token = parse
     | "null"                                      { NULL }
     | '"'('\\'_|[^'\\''"'])*'"' as s              { STRING (create_string s) }
     | "extends"                                   { EXTENDS }
+    | "schema"                                    { SCHEMA }
+    | "isa"                                       { ISA }
+    | "global"                                    { GLOBAL }
 	| ("#include"|"include")[' ''\t']+ '"'('\\'_|[^'\\''"'])+'"' [' ''\t']* ';' as s
       { INCLUDE (get_include_file s) } (* return included file name *)
     | "++"                                        { MERGE }
