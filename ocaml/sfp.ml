@@ -90,7 +90,7 @@ and parse file =
 let compile opt file =
   let result = parse file in
   if opt = "-yaml" then print_string (Domain.yaml_of_store result)
-  else if opt = "-xml" then print_string (Domain.xml_of_store result)
+  (*else if opt = "-xml" then print_string (Domain.xml_of_store result)*)
   else print_string (Domain.json_of_store result);
   print_newline()
 

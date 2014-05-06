@@ -1,12 +1,21 @@
 (*
  * semantics primary and secondary domains
  *)
-type number = Int of int | Float of float
-and vector = value list
-and value = Bool of bool | Num of number | Str of string | Null | Ref of string list | Vec of vector | Store of store
-and _value = Val of value | Undefined
-and cell = { id : string; v : value }
-and store = cell list;;
+type number = Int of int 
+            | Float of float
+and vector  = basic list
+and basic   = Bool of bool 
+            | Num of number 
+            | Str of string 
+            | Null 
+            | Ref of string list 
+            | Vec of vector
+and value   = Basic of basic
+            | Store of store
+and _value  = Val of value 
+            | Undefined
+and cell    = { id : string; v : value }
+and store   = cell list;;
 
 (* 
  * semantics algebras
@@ -121,12 +130,24 @@ let string_of_ref r = "\"$." ^ (String.concat "." r) ^ "\""
 
 (*** generate YAML from given store ***)
 let rec yaml_of_store s = yaml_of_store1 s ""
+and yaml_of_store1 s tab =
+  match s with
+  | [] -> "{}"
+  | head::tail ->
+      let h1 = tab ^ head.id ^ ": " in
+      match head.v with
+      | Basic basic ->
+          let h2 = h1 ^ yaml_of_value basic in
+          if tail = [] then h2 else h2 ^ "\n" ^ yaml_of_store1 tail tab
+      | Store child ->
+          let h2 = h1 ^ (if child = [] then "" else "\n") ^ yaml_of_store1 child (tab ^ "  ") in
+          if tail = [] then h2 else h2 ^ "\n" ^ yaml_of_store1 tail tab
 and yaml_of_vec vec =
   match vec with
   | [] -> ""
-  | head::tail -> let v = yaml_of_value head "" in
+  | head::tail -> let v = yaml_of_value head in
                   if tail = [] then v else v ^ "," ^ (yaml_of_vec tail)
-and yaml_of_value v tab =
+and yaml_of_value v =
   match v with
   | Bool b -> string_of_bool b
   | Num (Int i) -> string_of_int i
@@ -134,16 +155,7 @@ and yaml_of_value v tab =
   | Str s -> s
   | Null -> "null"
   | Ref r -> string_of_ref r
-  | Vec vec -> "[" ^ (yaml_of_vec vec) ^ "]"
-  | Store c ->
-      if c = [] then "{}" else "\n" ^ yaml_of_store1 c (tab ^ "  ")
-and yaml_of_store1 s tab =
-  match s with
-  | [] -> "{}"
-  | head::tail ->
-      let h = tab ^ head.id ^ ": " ^ yaml_of_value head.v (tab ^ "  ") in
-      if tail = [] then h
-      else h ^ "\n" ^ yaml_of_store1 tail tab;;
+  | Vec vec -> "[" ^ (yaml_of_vec vec) ^ "]";;
 
 (*** generate JSON of given store ***)
 let rec json_of_store s = "{" ^ (json_of_store1 s) ^ "}"
@@ -151,9 +163,14 @@ and json_of_store1 s =
   match s with
   | [] -> ""
   | head::tail ->
-      let h = "\"" ^ head.id ^ "\":" ^ json_of_value head.v in
-      if tail = [] then h
-      else h ^ "," ^ json_of_store1 tail
+      let h1 = "\"" ^ head.id ^ "\":" in
+      match head.v with
+      | Basic basic ->
+          let h2 = h1 ^ json_of_value basic in
+          if tail = [] then h2 ^ "" else h2 ^ "," ^ json_of_store1 tail
+      | Store child ->
+          let h2 = h1 ^ "{" ^ json_of_store1 child ^ "}" in
+          if tail = [] then h2 ^ "" else h2 ^ "," ^ json_of_store1 tail
 and json_of_value v =
   match v with
   | Bool b -> string_of_bool b
@@ -163,13 +180,13 @@ and json_of_value v =
   | Null -> "null"
   | Ref r -> string_of_ref r
   | Vec vec -> "[" ^ (json_of_vec vec) ^ "]"
-  | Store s -> "{" ^ (json_of_store1 s) ^ "}"
 and json_of_vec vec =
   match vec with
   | [] -> ""
   | head :: tail -> let h = json_of_value head in
                     if tail = [] then h else h ^ "," ^ (json_of_vec tail);;
 
+(*
 (*
  * generate XML of given store
  * - attribute started with '_' is treated as parent's XML attribute
@@ -213,4 +230,4 @@ and xml_of_vec vec : string =
   match vec with
   | [] -> ""
   | head::tail -> "<item>" ^ (xml_of_value head) ^ "</item>" ^ xml_of_vec tail;;
-
+*)
