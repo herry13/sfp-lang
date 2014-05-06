@@ -5,7 +5,8 @@ let help = "usage: sfp [option] <sfp-file>" ^
   "\n\nwhere [option] is:" ^
   "\n  -json   print output in JSON" ^
   "\n  -yaml   print output in YAML" ^
-  "\n  -xml    print output in XML\n\n"
+  (*"\n  -xml    print output in XML"*)
+  "\n\n"
 
 (* The Lexstack type. *)
 type 'a t =

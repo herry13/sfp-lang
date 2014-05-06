@@ -7,5 +7,6 @@ global {
 	a = 2;
 	b != 3;
 	c in [1,2,3];
-	if { d = x; } then { e = y; }
+	if { d = x; } then { e = y; };
 }
+

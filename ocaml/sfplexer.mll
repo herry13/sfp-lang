@@ -19,19 +19,23 @@ rule token = parse
     | "schema"                                    { SCHEMA }
     | "isa"                                       { ISA }
     | "global"                                    { GLOBAL }
+    | ("sub"|"def")                               { ACTION }
 	| ("#include"|"include")[' ''\t']+ '"'('\\'_|[^'\\''"'])+'"' [' ''\t']* ';' as s
       { INCLUDE (get_include_file s) } (* return included file name *)
     | "++"                                        { MERGE }
     | ','                                         { COMMA }
     | '{'                                         { BEGIN }
     | '}'                                         { END }
-    | '['                                         { LBRACKET }
-    | ']'                                         { RBRACKET }
+    | '['                                         { LSBRACKET }
+    | ']'                                         { RSBRACKET }
+    | '('                                         { LB }
+    | ')'                                         { RB }
+    | ':'                                         { COLON }
     | ("="|"is")                                  { EQ }
     | ("!="|"isnt")                               { NEQ }
     | "in"                                        { IN }
     | "if"                                        { IF }
-    | "else"                                      { ELSE }
+    | "then"                                      { THEN }
 	| ';'                                         { EOS } (* end of assignment *)
     | '.'                                         { SEP } (* identifiers' separator *)
 	| ['a'-'z' 'A'-'Z' '_'] ['a'-'z' 'A'-'Z' '_' '0'-'9']* as id    { ID id }
