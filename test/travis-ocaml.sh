@@ -1,11 +1,11 @@
 #!/bin/bash
 
-BASEDIR="$(dirname "$0")"
+BASEDIR="$(dirname '$0')"
 OPT_TYPE="-type"
 OPT_JSON="-json"
 OPT_YAML="-yaml"
 OPT_AST="-ast"
-BIN="$BASEDIR/../../ocaml/csfp"
+BIN="$BASEDIR/../ocaml/csfp"
 EXT="sfp"
 
 function test {
