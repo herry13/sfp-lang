@@ -1,6 +1,0 @@
-#include "include2.sfp";
-
-main {
-	#include "include1.sfp";
-}
-

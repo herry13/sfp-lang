@@ -1,7 +1,0 @@
-schema X {
-	a = 1;
-}
-
-main {
-	b isa X { b = 2; }
-}

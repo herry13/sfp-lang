@@ -1,8 +1,0 @@
-z = "test"
-x = 1
-x = z.a
-x = true
-x = [1, 2, 3]
-x = null;
-//x z;
-
