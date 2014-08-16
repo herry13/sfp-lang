@@ -8,10 +8,11 @@ let json_of_parameters (ps: basic MapStr.t) : string =
 	let buf = Buffer.create 42 in
 	Buffer.add_char buf '{';
 	MapStr.iter (fun id v ->
+		Buffer.add_char buf '"';
 		Buffer.add_string buf id;
 		Buffer.add_string buf "\":";
 		Buffer.add_string buf (json_of_value (Basic v));
-		Buffer.add_string buf ",\"";
+		Buffer.add_string buf ",";
 	) ps;
 	if Buffer.length buf <= 1 then "{}"
 	else (Buffer.sub buf 0 ((Buffer.length buf) - 1)) ^ "}"
