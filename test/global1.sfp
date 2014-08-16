@@ -1,0 +1,14 @@
+main {
+	a = 1;
+	b = a;
+	c = [1, 2, 3];
+}
+
+global {
+	a = 2;
+	b != 3;
+	c in [1,2,3];
+	if { d = x; } then { e = y; }
+}
+
+global a = 2;

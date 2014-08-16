@@ -1,0 +1,13 @@
+*.swp
+*.o
+parser.mli
+lexer.mli
+*.cmo
+*.cmi
+csf
+csfp
+lexer.ml
+parser.ml
+.paths
+.project
+.settings
