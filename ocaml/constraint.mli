@@ -1,7 +1,7 @@
 open Common
 open Domain
 
-val eval : store -> _constraint -> bool
+val apply : store -> _constraint -> bool
 
 val dnf_of : _constraint -> Variable.ts -> Type.env -> _constraint
 
