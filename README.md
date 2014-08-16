@@ -1,6 +1,8 @@
 SFP Language Compiler
 =====================
 
+[![Build Status](https://travis-ci.org/herry13/sfp-lang.svg?branch=master)](https://travis-ci.org/herry13/sfp-lang)
+
 This is the implementation of the formal semantic of SFP language. Supporting features are:
 - Static type system
 - Static schema
@@ -13,7 +15,6 @@ This is the implementation of the formal semantic of SFP language. Supporting fe
 - Keywords: `root`, `parent`, and `this`
 - Finite Domain Representation ([FDR](http://www.fast-downward.org/TranslatorOutputFormat)) generator for planning
 
-Currently, only the [OCaml](ocaml/) implementation is working. The [Scala](scala/) implementation is still under development.
 
 To build
 --------
@@ -26,6 +27,7 @@ Compile:
 	make dist
 
 The above command will generate file `csfp` in directory `ocaml`. In default, the codes are compiled into OCaml bytecodes which requires OCaml runtime for running. However, we can compile the codes into native bytecodes by setting variable `NATIVE=1` in `Makefile`. This change will generate the same file i.e. `csfp`, but this is a native executable file which can be invoked without any OCaml runtime.
+
 
 Usage
 -----
