@@ -11,3 +11,5 @@ parser.ml
 .paths
 .project
 .settings
+dist/linux/downward
+dist/linux/preprocess

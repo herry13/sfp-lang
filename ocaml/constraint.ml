@@ -253,96 +253,117 @@ let rec substitute_parameters_of (c: _constraint) params =
  * Functions for global constraints.
  ************************************************************************)
 
-type constraints_variables = { cons: _constraint list; implies: _constraint list; vars: Variable.ts }
+type data =
+	{
+		complex: _constraint list;
+		simple: _constraint list;
+		variables: Variable.ts
+	}
 
 (** compile simple membership of global constraints **)
-let compile_simple_global_membership negation r (vec: vector) cons_vars env =
+let compile_simple_global_membership negation r (vec: vector) dat =
 	let rec prevail_of rx =
 		if rx = [] then error 507
-		else if Variable.mem rx cons_vars.vars then rx
+		else if Variable.mem rx dat.variables then rx
 		else prevail_of (prefix rx)
 	in
 	let prevail = prevail_of r in
 	if prevail = r then
-		{	cons    = cons_vars.cons;
-			implies = cons_vars.implies;
-			vars    = if negation then Variable.remove_values_from r vec cons_vars.vars
-			          else Variable.intersection_with_values r vec cons_vars.vars
+		{
+			complex   = dat.complex;
+			simple    = dat.simple;
+			variables = if negation then Variable.remove_values_from r vec dat.variables
+			            else Variable.intersection_with_values r vec dat.variables
 		}
 	else
-		let vars1 = Variable.remove_value_from prevail (Basic Null) cons_vars.vars in
+		let vars1 = Variable.remove_value_from prevail (Basic Null) dat.variables in
 		let rs = r @-- prevail in
 		Array.fold_left (fun acc v1 ->
 				match v1 with
 				| Basic (Ref r1) ->
 					let r2 = r1 @++ rs in
-					let c = (* TODO: convert (Eq => In) to (Eq => Eq)...(Eq => Eq) *)
+					let c =
 						if negation then Imply (Eq (prevail, Ref r1), Not (In (r2, vec)))
 						else Imply (Eq (prevail, Ref r1), In (r2, vec))
 					in
+					(* TODO: convert (Eq => In) to (Eq => Eq)...(Eq => Eq) *)
 					(* below lines were commented because the above TODO has not been implemented *)
 					(* if Variable.mem r2 acc.vars then
 						{ cons = acc.cons; implies = c :: acc.implies; vars = acc.vars }
-					else *)
-						{ cons = c :: acc.cons; implies = acc.implies; vars = acc.vars }
-				| _              -> error 508
+					else
+						{ complex = c :: acc.complex; simple = acc.simple; variables = acc.variables } *)
+					{ complex = c :: acc.complex; simple = acc.simple; variables = acc.variables }
+				| _ -> error 508
+				
 			)
-			{ cons = cons_vars.cons; implies = cons_vars.implies; vars = vars1 }
+			{ complex = dat.complex; simple = dat.simple; variables = vars1 }
 			(Variable.values_of prevail vars1)
 
 (** compile simple equality of global constraints **)
-let compile_simple_global_equality negation r v cons_vars env =
+let compile_simple_global_equality negation r v dat =
 	let rec prevail_of rx =
 		if rx = [] then error 509
-		else if Variable.mem rx cons_vars.vars then rx
+		else if Variable.mem rx dat.variables then rx
 		else prevail_of (prefix rx)
 	in
 	let prevail = prevail_of r in
 	if prevail = r then
-		{	cons    = cons_vars.cons;
-			implies = cons_vars.implies;
-			vars    = if negation then Variable.remove_value_from r (Basic v) cons_vars.vars
-			          else Variable.intersection_with_value r (Basic v) cons_vars.vars
+		{
+			complex   = dat.complex;
+			simple    = dat.simple;
+			variables = if negation then Variable.remove_value_from r (Basic v) dat.variables
+			            else Variable.intersection_with_value r (Basic v) dat.variables
 		}
 	else 
-		let vars1 = Variable.remove_value_from prevail (Basic Null) cons_vars.vars in
+		let vars1 = Variable.remove_value_from prevail (Basic Null) dat.variables in
 		let rs = r @-- prevail in
 		Array.fold_left (fun acc v1 ->
 				match v1 with
 				| Basic (Ref r1) ->
 					let r2 = r1 @++ rs in
-					let c = (* TODO: convert (Eq => Ne) to (Eq => Eq)...(Eq => Eq) *)
+					let c =
 						if negation then Imply (Eq (prevail, Ref r1), Ne (r2, v))
 						else Imply (Eq (prevail, Ref r1), Eq (r2, v))
 					in
+					(* TODO: convert (Eq => Ne) to (Eq => Eq)...(Eq => Eq) *)
 					(* below lines were commented because the above TODO has not been implemented *)
-					(* if Variable.mem r2 acc.vars then *)
-					if (Variable.mem r2 acc.vars) && not negation then
-						{ cons = acc.cons; implies = c :: acc.implies; vars = acc.vars }
+					(* if Variable.mem r2 acc.variables then *)
+					if (Variable.mem r2 acc.variables) && not negation then
+						{ complex = acc.complex; simple = c :: acc.simple; variables = acc.variables }
 					else
-						{ cons = c :: acc.cons; implies = acc.implies; vars = acc.vars }
+						{ complex = c :: acc.complex; simple = acc.simple; variables = acc.variables }
 				| _ -> error 510
 			)
-			{ cons = cons_vars.cons; implies = cons_vars.implies; vars = vars1 }
+			{ complex = dat.complex; simple = dat.simple; variables = vars1 }
 			(Variable.values_of prevail vars1)
 
 (** compile simple equality and membership of global constraints **)
-let compile_simple_global global vars env =
+let compile_simple_global global vars =
 	match global with
 	| And cs ->
 		let result1 = List.fold_left (fun acc c ->
 				match c with
-				| Eq (r, v)         -> compile_simple_global_equality false r v acc env
-				| Not (Eq (r, v))   -> compile_simple_global_equality true r v acc env
-				| Ne (r, v)         -> compile_simple_global_equality true r v acc env
-				| Not (Ne (r, v))   -> compile_simple_global_equality false r v acc env
-				| In (r, vec)       -> compile_simple_global_membership false r vec acc env
-				| Not (In (r, vec)) -> compile_simple_global_membership true r vec acc env
-				| Imply (Eq (_, _), Eq (_, _)) -> { cons = acc.cons; implies = c :: acc.implies; vars = acc.vars }
-				| _                 -> { cons = c :: acc.cons; implies = acc.implies; vars = acc.vars }
-			) { cons = []; implies = []; vars = vars } cs
+				| Eq (r, v)         -> compile_simple_global_equality false r v acc
+				| Not (Eq (r, v))   -> compile_simple_global_equality true r v acc
+				| Ne (r, v)         -> compile_simple_global_equality true r v acc
+				| Not (Ne (r, v))   -> compile_simple_global_equality false r v acc
+				| In (r, vec)       -> compile_simple_global_membership false r vec acc
+				| Not (In (r, vec)) -> compile_simple_global_membership true r vec acc
+				| Imply (Eq (_, _), Eq (_, _)) ->
+					{
+						complex = acc.complex;
+						simple = c :: acc.simple;
+						variables = acc.variables
+					}
+				| _ ->
+					{
+						complex = c :: acc.complex;
+						simple = acc.simple;
+						variables = acc.variables
+					}
+			) { complex = []; simple = []; variables = vars } cs
 		in
-		(And result1.cons, result1.implies, result1.vars)
+		(And result1.complex, result1.simple, result1.variables)
 	| _  -> (global, [], vars)
 
 (**
@@ -354,7 +375,7 @@ let global_of (env: Type.env) (fs: Domain.flatstore) (vars: Variable.ts) : (_con
 	if MapRef.mem r fs then
 		match MapRef.find r fs with
 		| Global g ->
-			let (global1, implies1, vars1) = compile_simple_global g vars env in
+			let (global1, implies1, vars1) = compile_simple_global g vars in
 			let global_dnf = dnf_of global1 vars1 env in
 			(global_dnf, implies1, vars1)
 		| _        -> error 519
