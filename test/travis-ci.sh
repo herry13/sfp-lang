@@ -12,7 +12,7 @@
 #######################################
 
 # compile csf
-cd ../ocaml
+cd ocaml
 make travis
 cd ../test
 

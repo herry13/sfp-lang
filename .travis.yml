@@ -1,6 +1,6 @@
 language: java
 
-script: bash -ex travis-ci.sh
+script: bash -ex test/travis-ci.sh
 
 branches:
   only:
