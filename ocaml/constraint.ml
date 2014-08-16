@@ -1,10 +1,45 @@
 open Common
 open Domain
 
-let eval (s: store) (c: _constraint) : bool = false (* TODO *)
+let rec apply (s: store) (c: _constraint) : bool =
+	match c with
+	| Eq (r, v) -> (
+			match find s r with
+			| Val (Basic v1) -> v = v1
+			| _ -> false
+		)
+	| Ne (r, v) -> (
+			match find s r with
+			| Val (Basic v1) -> v <> v1
+			| _ -> false
+		)
+	| Not c1 -> not (apply s c1)
+	| Imply (c1, c2) -> not (apply s c1) || (apply s c2)
+	| In (r, vec) -> (
+			match find s r with
+			| Val (Basic v1) -> List.mem v1 vec
+			| _ -> false
+		)
+	| And cs -> (
+			let rec iter cs =
+				match cs with
+				| [] -> true
+				| head :: tail -> if not (apply s head) then false else iter tail
+			in
+			iter cs
+		)
+	| Or cs -> (
+			let rec iter cs =
+				match cs with
+				| [] -> false
+				| head :: tail -> if apply s head then true else iter tail
+			in
+			if cs = [] then true else iter cs
+		)
+	| _ -> error 800
 
 (* mode: {1 => Eq, 2 => Ne, 3 => In, 4 => NotIn } *)
-let rec constraints_of_nested r v vars env mode =
+let rec compile_nested r v vars env mode =
 	let rec prevail_of rx =
 		if rx = [] then error 507
 		else if Variable.mem rx vars then rx
@@ -118,7 +153,7 @@ and dnf_of c (vars: Variable.ts) env =
 (** convert equality to DNF, and convert a left-nested reference to prevail ones **)
 and dnf_of_equal r v vars env =
 	if Variable.mem r vars then Eq (r, v)
-	else dnf_of (constraints_of_nested r v vars env 1) vars env
+	else dnf_of (compile_nested r v vars env 1) vars env
 
 (** convert inequality to DNF, and convert a left-nested reference to prevail ones **)
 and dnf_of_not_equal r v vars env =
@@ -135,7 +170,7 @@ and dnf_of_not_equal r v vars env =
 		else dnf_of (In (r, values)) vars env
 
 	else
-		dnf_of (constraints_of_nested r v vars env 2) vars env
+		dnf_of (compile_nested r v vars env 2) vars env
 
 (** convert negation to DNF **)
 and dnf_of_negation c vars env =
@@ -167,7 +202,7 @@ and dnf_of_negation c vars env =
 			if cs = [] then False
 			else dnf_of (Or cs) vars env
 		else
-			dnf_of (constraints_of_nested r (Vector vec) vars env 4) vars env
+			dnf_of (compile_nested r (Vector vec) vars env 4) vars env
 
 (** convert implication to DNF **)
 and dnf_of_implication premise conclusion vars env =
@@ -188,7 +223,7 @@ and dnf_of_membership r vec vars env =
 		if cs = [] then False
 		else dnf_of (Or cs) vars env
 	else
-		dnf_of (constraints_of_nested r (Vector vec) vars env 3) vars env
+		dnf_of (compile_nested r (Vector vec) vars env 3) vars env
 
 (** convert conjunction to DNF, performs cross-products when it has disjunction clause **)
 and dnf_of_conjunction cs vars env =
@@ -261,7 +296,7 @@ type data =
 	}
 
 (** compile simple membership of global constraints **)
-let compile_simple_global_membership negation r (vec: vector) dat =
+let compile_simple_global_membership (is_negation: bool) (r: reference) (vec: vector) (dat: data) : data =
 	let rec prevail_of rx =
 		if rx = [] then error 507
 		else if Variable.mem rx dat.variables then rx
@@ -272,7 +307,7 @@ let compile_simple_global_membership negation r (vec: vector) dat =
 		{
 			complex   = dat.complex;
 			simple    = dat.simple;
-			variables = if negation then Variable.remove_values_from r vec dat.variables
+			variables = if is_negation then Variable.remove_values_from r vec dat.variables
 			            else Variable.intersection_with_values r vec dat.variables
 		}
 	else
@@ -283,7 +318,7 @@ let compile_simple_global_membership negation r (vec: vector) dat =
 				| Basic (Ref r1) ->
 					let r2 = r1 @++ rs in
 					let c =
-						if negation then Imply (Eq (prevail, Ref r1), Not (In (r2, vec)))
+						if is_negation then Imply (Eq (prevail, Ref r1), Not (In (r2, vec)))
 						else Imply (Eq (prevail, Ref r1), In (r2, vec))
 					in
 					(* TODO: convert (Eq => In) to (Eq => Eq)...(Eq => Eq) *)
@@ -294,13 +329,12 @@ let compile_simple_global_membership negation r (vec: vector) dat =
 						{ complex = c :: acc.complex; simple = acc.simple; variables = acc.variables } *)
 					{ complex = c :: acc.complex; simple = acc.simple; variables = acc.variables }
 				| _ -> error 508
-				
 			)
 			{ complex = dat.complex; simple = dat.simple; variables = vars1 }
 			(Variable.values_of prevail vars1)
 
 (** compile simple equality of global constraints **)
-let compile_simple_global_equality negation r v dat =
+let compile_simple_global_equality (is_negation: bool) (r: reference) (v: basic) (dat: data) : data =
 	let rec prevail_of rx =
 		if rx = [] then error 509
 		else if Variable.mem rx dat.variables then rx
@@ -311,7 +345,7 @@ let compile_simple_global_equality negation r v dat =
 		{
 			complex   = dat.complex;
 			simple    = dat.simple;
-			variables = if negation then Variable.remove_value_from r (Basic v) dat.variables
+			variables = if is_negation then Variable.remove_value_from r (Basic v) dat.variables
 			            else Variable.intersection_with_value r (Basic v) dat.variables
 		}
 	else 
@@ -322,13 +356,13 @@ let compile_simple_global_equality negation r v dat =
 				| Basic (Ref r1) ->
 					let r2 = r1 @++ rs in
 					let c =
-						if negation then Imply (Eq (prevail, Ref r1), Ne (r2, v))
+						if is_negation then Imply (Eq (prevail, Ref r1), Ne (r2, v))
 						else Imply (Eq (prevail, Ref r1), Eq (r2, v))
 					in
 					(* TODO: convert (Eq => Ne) to (Eq => Eq)...(Eq => Eq) *)
 					(* below lines were commented because the above TODO has not been implemented *)
 					(* if Variable.mem r2 acc.variables then *)
-					if (Variable.mem r2 acc.variables) && not negation then
+					if (Variable.mem r2 acc.variables) && not is_negation then
 						{ complex = acc.complex; simple = c :: acc.simple; variables = acc.variables }
 					else
 						{ complex = c :: acc.complex; simple = acc.simple; variables = acc.variables }
@@ -338,7 +372,7 @@ let compile_simple_global_equality negation r v dat =
 			(Variable.values_of prevail vars1)
 
 (** compile simple equality and membership of global constraints **)
-let compile_simple_global global vars =
+let compile_simple_global (global: _constraint) (vars: Variable.ts) =
 	match global with
 	| And cs ->
 		let result1 = List.fold_left (fun acc c ->
@@ -355,6 +389,24 @@ let compile_simple_global global vars =
 						simple = c :: acc.simple;
 						variables = acc.variables
 					}
+				| Imply (Eq (r, v), And cs) -> (
+						let eq = Eq (r, v) in
+						List.fold_left (fun (acc: data) (c: _constraint) ->
+							match c with
+							| Eq (_, _) ->
+								{
+									complex = acc.complex;
+									simple = (Imply (eq, c)) :: acc.simple;
+									variables = acc.variables
+								}
+							| _ ->
+								{
+									complex = (Imply (eq, c)) :: acc.complex;
+									simple = acc.simple;
+									variables = acc.variables
+								}
+						) acc cs
+					)
 				| _ ->
 					{
 						complex = c :: acc.complex;
