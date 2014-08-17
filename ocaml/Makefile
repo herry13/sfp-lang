@@ -132,7 +132,9 @@ linux: dist
 
 install-ocaml:
 	# install OCaml from apt
+	sudo add-apt-repository ppa:avsm/ppa
 	sudo apt-get update -qq
-	sudo apt-get install -qq ocaml
+	sudo apt-get install -qq ocaml ocaml-findlib opam
+	opam install -y yojson
 
 travis: install-ocaml dist
