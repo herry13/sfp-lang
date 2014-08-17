@@ -130,11 +130,4 @@ darwin: dist
 linux: dist
 	@mv -f $(NAME) dist/linux
 
-install-ocaml:
-	# install OCaml from apt
-	sudo apt-get update -qq
-	sudo apt-get install -qq ocaml ocaml-findlib
-	bash <(curl -s https://raw.githubusercontent.com/ocaml/opam/master/.travis-ci.sh)
-	opam install -y yojson
-
-travis: install-ocaml dist
+travis: dist

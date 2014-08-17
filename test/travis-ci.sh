@@ -11,6 +11,14 @@
 # csf : ocaml compiler
 #######################################
 
+# install ocaml
+echo "yes" | sudo add-apt-repository ppa:avsm/ppa
+sudo apt-get update -qq
+sudo apt-get install -qq ocaml ocaml-findlib opam
+
+# install required library
+opam install -y yojson
+
 # compile csf
 cd ocaml
 make travis
