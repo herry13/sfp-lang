@@ -228,6 +228,12 @@ let string_of_ref r = "$." ^ String.concat "." r
 
 let (!^) r = string_of_ref r
 
+let reference_of_string s =
+	let sep = Str.regexp "\\." in
+	let r = Str.split sep s in
+	if List.hd r = "$" then List.tl r
+	else error 900
+
 
 (*******************************************************************
  * convert the semantics domain to YAML

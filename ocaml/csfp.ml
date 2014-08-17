@@ -58,7 +58,8 @@ let fd_plan init goal =
 				let s       = String.create n in
 				really_input channel s 0 n;
 				close_in channel;
-				"\n\nSolution plan:\n" ^ s
+				let plan = Plan.from_fast_downward s in
+				"\n\nSolution plan:\n" ^ (Plan.to_string plan)
 			)
 			else "No solution!"
 		in
@@ -75,7 +76,7 @@ let fd_plan init goal =
 					plan
 				with e -> plan
 	with
-		e -> prerr_string "Error: environment variable FD_PREPROCESS or FD_SEARCH is not defined.\n\n"; exit 1
+		Not_found -> prerr_string "Error: environment variable FD_PREPROCESS or FD_SEARCH is not defined.\n\n"; exit 1
 
 
 let usage_msg = "usage: csfp [options]\n\nwhere [options] are:";;

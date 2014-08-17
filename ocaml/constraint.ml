@@ -377,7 +377,7 @@ let compile_simple_global (global: _constraint) (vars: Variable.ts) =
 	| And cs ->
 		let result1 = List.fold_left (fun acc c ->
 				match c with
-				| Eq (r, v)         -> compile_simple_global_equality false r v acc
+				(* | Eq (r, v)         -> compile_simple_global_equality false r v acc *)
 				| Not (Eq (r, v))   -> compile_simple_global_equality true r v acc
 				| Ne (r, v)         -> compile_simple_global_equality true r v acc
 				| Not (Ne (r, v))   -> compile_simple_global_equality false r v acc

@@ -30,6 +30,7 @@ BYTECODELIB= \
 	action.cmo \
 	valuation.cmo \
 	fdr.cmo \
+	plan.cmo \
 	csfp.cmo
 
 # native code libraries
@@ -47,12 +48,13 @@ NATIVELIB= \
 	action.cmx \
 	valuation.cmx \
 	fdr.cmx \
+	plan.cmx \
 	csfp.cmx
 
 # default
 build: csfp
 
-csfp: csfp.ml action helper valuation type fdr
+csfp: csfp.ml action helper valuation type fdr plan
 	$(COMPILER) -c csfp.ml
 ifeq ($(NATIVE),1)
 	$(COMPILER) -o $(NAME) $(NATIVELIB)
@@ -107,6 +109,10 @@ action: common domain type variable constraint action.mli action.ml
 fdr: common domain type variable constraint action fdr.mli fdr.ml
 	$(COMPILER) -c fdr.mli
 	$(COMPILER) -c fdr.ml
+
+plan: domain plan.mli plan.ml
+	$(COMPILER) -c plan.mli
+	$(COMPILER) -c plan.ml
 
 clean:
 	@rm -f *.s *.cmo parser.mli lexer.mli *.cmi *.o *.cmx parser.ml lexer.ml parser.output ocamlprof.dump
