@@ -19,7 +19,8 @@ and  prototype     = R_P of reference * prototype
                    | B_P of block * prototype
                    | EmptyPrototype
 and  basicValue    = Boolean of string
-                   | Number  of string
+                   | Int     of string
+                   | Float   of string
                    | String  of string
                    | Null
                    | Vector  of vector
@@ -41,7 +42,8 @@ and _type     = TBasic   of basicType
               | TForward of reference * bool  (* r [link: true, data: false] *)
               | TUndefined
 and basicType = TBool                         (* (Type Bool)   *)
-              | TNum                          (* (Type Num)    *)
+              | TInt                          (* (Type Int)    *)
+              | TFloat                        (* (Type Float)  *)
               | TStr                          (* (Type Str)    *)
               | TObject                       (* (Type Object) *)
               | TSchema of string * basicType (* (Type Schema) *)
@@ -101,9 +103,10 @@ and string_of_proto p =
 
 and string_of_basic_value bv =
 	match bv with
-	| Boolean b  -> b
-	| Number n   -> n
-	| String s   -> s
+	| Boolean x
+	| Int x
+	| Float x
+	| String x   -> x
 	| Null       -> "NULL"
 	| Vector vec -> "[" ^ (string_of_vector vec) ^ "]"
 	| DR dr      -> "DATA " ^ (string_of_ref dr)
@@ -129,7 +132,8 @@ and string_of_type t =
 and string_of_basic_type t =
 	match t with
 	| TBool               -> "bool"
-	| TNum                -> "num"
+	| TInt                -> "int"
+	| TFloat              -> "float"
 	| TStr                -> "str"
 	| TObject             -> "obj"
 	| TSchema (id, super) -> "@" ^ id ^ "<:" ^ (string_of_basic_type super)

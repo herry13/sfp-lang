@@ -22,7 +22,7 @@
 
 	(* reserved words *)
 	let keywords = ["true"; "false"; "null"; "NULL"; "extends"; "DATA";
-	                "isa"; "schema"; "bool"; "boolean"; "num"; "number";
+	                "isa"; "schema"; "bool"; "int"; "float";
 	                "str"; "string"; "obj"; "object"; "include"; "import";
 	                "in"; "if"; "then"; "global"; "not";
 	                "def"; "action"; "sub"; "cost"; "condition"; "conditions";
@@ -60,8 +60,9 @@ let extends          = "extends"
 let data_ref         = "DATA"
 let isa              = "isa"
 let schema           = "schema"
-let t_bool           = "bool" | "boolean"
-let t_num            = "num" | "number"
+let t_bool           = "bool"
+let t_int            = "int"
+let t_float          = "float"
 let t_str            = "str" | "string"
 let t_obj            = "obj" | "object"
 let _in              = "in"
@@ -108,7 +109,8 @@ rule token =
 	| isa         { ISA }
 	| schema      { SCHEMA }
 	| t_bool      { TBOOL }
-	| t_num       { TNUM }
+	| t_int       { TINT }
+	| t_float     { TFLOAT }
 	| t_str       { TSTR }
 	| t_obj       { TOBJ }
 	| _in         { IN }

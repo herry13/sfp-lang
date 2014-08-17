@@ -4,11 +4,10 @@ open Common
  * semantics domain
  *******************************************************************)
 (** core elements **)
-type number   = Int of int
-              | Float of float
-and vector    = basic list
+type vector   = basic list
 and basic     = Boolean of bool
-              | Number of number
+              | Int of int
+              | Float of float
               | String of string
               | Null
               | Vector of vector

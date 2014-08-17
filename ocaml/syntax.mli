@@ -19,7 +19,8 @@ and  prototype     = R_P of reference * prototype
                    | B_P of block * prototype
                    | EmptyPrototype
 and  basicValue    = Boolean of string
-                   | Number  of string
+                   | Int     of string
+                   | Float   of string
                    | String  of string
                    | Null
                    | Vector  of vector
@@ -39,7 +40,8 @@ and _type     = TBasic   of basicType
               | TForward of reference * bool  (* r [link: true, data: false] *)
               | TUndefined
 and basicType = TBool                         (* (Type Bool)   *)
-              | TNum                          (* (Type Num)    *)
+              | TInt                          (* (Type Int)    *)
+              | TFloat                        (* (Type Float)  *)
               | TStr                          (* (Type Str)    *)
               | TObject                       (* (Type Object) *)
               | TSchema of string * basicType (* (Type Schema) *)

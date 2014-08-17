@@ -23,7 +23,7 @@ open Syntax
 %token <Syntax.sfpcontext -> Syntax.sfpcontext> SFP_INCLUDE
 %token EXTENDS COMMA DATA BEGIN END SEP NULL
 %token LBRACKET RBRACKET EOS EOF
-%token ISA SCHEMA ASTERIX COLON TBOOL TNUM TSTR TOBJ
+%token ISA SCHEMA ASTERIX COLON TBOOL TINT TFLOAT TSTR TOBJ
 %token GLOBAL EQUAL NOT_EQUAL IF THEN IN NOT LPARENTHESIS RPARENTHESIS
 %token COST CONDITIONS EFFECTS ACTION
 
@@ -81,8 +81,8 @@ prototype
 
 basic
     : BOOL           { Boolean $1 }
-    | INT            { Number $1 }
-    | FLOAT          { Number $1 }
+    | INT            { Int $1 }
+    | FLOAT          { Float $1 }
     | STRING         { String $1 }
     | data_reference { DR $1 }
     | NULL           { Null }
@@ -122,11 +122,12 @@ ttype
 	| tau                     { TBasic $1 }
 
 tau
-	: TBOOL { TBool }
-	| TNUM  { TNum }
-	| TSTR  { TStr }
-	| TOBJ  { TObject }
-	| ID    { TSchema ($1, TObject) }
+	: TBOOL  { TBool }
+	| TINT   { TInt }
+	| TFLOAT { TFloat }
+	| TSTR   { TStr }
+	| TOBJ   { TObject }
+	| ID     { TSchema ($1, TObject) }
 
 global
 	: sfp_constraint { $1 }

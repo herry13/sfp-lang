@@ -2,11 +2,9 @@ open Syntax
 
 let sfBoolean b = if b = "true" then Domain.Boolean true else Domain.Boolean false
 
-let int_regex = Str.regexp "\\(^-?[0-9]+$\\)"
+let sfInt n = Domain.Int (int_of_string n)
 
-let sfNumber n =
-	if Str.string_match int_regex n 0 then Domain.Number (Domain.Int (int_of_string n))
-	else Domain.Number (Domain.Float (float_of_string n))
+let sfFloat f = Domain.Float (float_of_string f)
 
 let sfString s = Domain.String s
 
@@ -31,7 +29,8 @@ let rec sfVector vec =
 and sfBasicValue bv =
 	match bv with
 	| Boolean b  -> sfBoolean b
-	| Number n   -> sfNumber n
+	| Int n      -> sfInt n
+	| Float f    -> sfFloat f
 	| String s   -> sfString s
 	| Null       -> sfNull
 	| Vector vec -> sfVector vec
@@ -156,7 +155,7 @@ and sfpAction (params, _cost, conds, effs) =
 	let parameters =
 		List.fold_left (fun acc (id, t) ->
 			match t with
-			| TBasic TNum | TBasic TStr -> Domain.error 101
+			| TBasic TInt | TBasic TFloat | TBasic TStr -> Domain.error 101
 			| _ -> (id, t) :: acc
 		) [] params
 	in

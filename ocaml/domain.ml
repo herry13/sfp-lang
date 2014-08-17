@@ -4,11 +4,10 @@ open Common
  * semantics primary and secondary domains
  *******************************************************************)
 (** core elements **)
-type number   = Int of int
-              | Float of float
-and vector    = basic list
+type vector   = basic list
 and basic     = Boolean of bool
-              | Number of number
+              | Int of int
+              | Float of float
               | String of string
               | Null
               | Vector of vector
@@ -269,8 +268,8 @@ and yaml_of_vec vec =
 and yaml_of_basic v =
 	match v with
 	| Boolean b -> string_of_bool b
-	| Number (Int i) -> string_of_int i
-	| Number (Float f) -> string_of_float f
+	| Int i -> string_of_int i
+	| Float f -> string_of_float f
 	| String s -> s
 	| Null -> "null"
 	| Vector vec -> "[" ^ (yaml_of_vec vec) ^ "]"
@@ -300,8 +299,8 @@ and json_of_value v =
 and json_of_basic v =
 	match v with
 	| Boolean b -> string_of_bool b
-	| Number (Int i) -> string_of_int i
-	| Number (Float f) -> string_of_float f
+	| Int i -> string_of_int i
+	| Float f -> string_of_float f
 	| String s -> "\"" ^ s ^ "\""
 	| Null -> "null"
 	| Vector vec -> "[" ^ (json_of_vec vec) ^ "]"

@@ -88,7 +88,8 @@ let rec has_type (e: lenv) (t: _type) : bool =
 	| TVec tv                   -> has_type e tv           (* (Type Vec)    *)
 	| TRef tr                   -> has_type e (TBasic tr)  (* (Type Ref)    *)
 	| TBasic TBool              -> true                    (* (Type Bool)   *)
-	| TBasic TNum               -> true                    (* (Type Num)    *)
+	| TBasic TInt               -> true                    (* (Type Int)    *)
+	| TBasic TFloat             -> true                    (* (Type Flaot)    *)
 	| TBasic TStr               -> true                    (* (Type Str)    *)
 	| TBasic TNull              -> true                    (* (Type Null)   *)
 	| TBasic TObject            -> true                    (* (Type Object) *)
@@ -289,7 +290,9 @@ let get_main (e: lenv) : lenv =
 
 let sfBoolean b = TBasic TBool  (* (Bool) *)
 
-let sfNumber n = TBasic TNum    (* (Num)  *)
+let sfInt i = TBasic TInt (* (Int) *)
+
+let sfFloat f = TBasic TFloat (* (Float) *)
 
 let sfString s = TBasic TStr    (* (Str)  *)
 
@@ -352,7 +355,8 @@ and sfBasicValue bv : lenv -> reference -> _type =
 	fun e ns ->
 		match bv with
 		| Boolean b  -> sfBoolean b
-		| Number n   -> sfNumber n
+		| Int i      -> sfInt i
+		| Float f    -> sfFloat f
 		| String s   -> sfString s
 		| Null       -> sfNull
 		| Vector vec -> sfVector vec e ns
@@ -511,7 +515,8 @@ let make_typevalue (env_0: env) (fs_0: Domain.flatstore) (env_g: env) (fs_g: Dom
 				fun acc (r, v) ->
 					match v with
 					| Domain.Boolean _ -> add_value (TBasic TBool) (Domain.Basic v) acc
-					| Domain.Number  _ -> add_value (TBasic TNum) (Domain.Basic v) acc
+					| Domain.Int     _ -> add_value (TBasic TInt) (Domain.Basic v) acc
+					| Domain.Float   _ -> add_value (TBasic TFloat) (Domain.Basic v) acc
 					| Domain.String  _ -> add_value (TBasic TStr) (Domain.Basic v) acc
 					| Domain.Vector  _ -> error 501 "adding vector value of effects" (* TODO *)
 					| _         -> acc
