@@ -290,8 +290,8 @@ let rec substitute_parameters_of (c: _constraint) params =
 
 type data =
 	{
-		complex: _constraint list;
-		simple: _constraint list;
+		complex  : _constraint list;
+		simple   : _constraint list;
 		variables: Variable.ts
 	}
 
@@ -321,12 +321,6 @@ let compile_simple_global_membership (is_negation: bool) (r: reference) (vec: ve
 						if is_negation then Imply (Eq (prevail, Ref r1), Not (In (r2, vec)))
 						else Imply (Eq (prevail, Ref r1), In (r2, vec))
 					in
-					(* TODO: convert (Eq => In) to (Eq => Eq)...(Eq => Eq) *)
-					(* below lines were commented because the above TODO has not been implemented *)
-					(* if Variable.mem r2 acc.vars then
-						{ cons = acc.cons; implies = c :: acc.implies; vars = acc.vars }
-					else
-						{ complex = c :: acc.complex; simple = acc.simple; variables = acc.variables } *)
 					{ complex = c :: acc.complex; simple = acc.simple; variables = acc.variables }
 				| _ -> error 508
 			)
@@ -359,10 +353,7 @@ let compile_simple_global_equality (is_negation: bool) (r: reference) (v: basic)
 						if is_negation then Imply (Eq (prevail, Ref r1), Ne (r2, v))
 						else Imply (Eq (prevail, Ref r1), Eq (r2, v))
 					in
-					(* TODO: convert (Eq => Ne) to (Eq => Eq)...(Eq => Eq) *)
-					(* below lines were commented because the above TODO has not been implemented *)
-					(* if Variable.mem r2 acc.variables then *)
-					if (Variable.mem r2 acc.variables) && not is_negation then
+					if not is_negation && (Variable.mem r2 acc.variables) then
 						{ complex = acc.complex; simple = c :: acc.simple; variables = acc.variables }
 					else
 						{ complex = c :: acc.complex; simple = acc.simple; variables = acc.variables }
@@ -377,7 +368,7 @@ let compile_simple_global (global: _constraint) (vars: Variable.ts) =
 	| And cs ->
 		let result1 = List.fold_left (fun acc c ->
 				match c with
-				(* | Eq (r, v)         -> compile_simple_global_equality false r v acc *)
+				| Eq (r, v)         -> compile_simple_global_equality false r v acc
 				| Not (Eq (r, v))   -> compile_simple_global_equality true r v acc
 				| Ne (r, v)         -> compile_simple_global_equality true r v acc
 				| Not (Ne (r, v))   -> compile_simple_global_equality false r v acc
