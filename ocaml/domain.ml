@@ -1,4 +1,5 @@
 open Common
+open Yojson.Basic
 
 (*******************************************************************
  * semantics primary and secondary domains
@@ -275,9 +276,45 @@ and yaml_of_basic v =
 	| Vector vec -> "[" ^ (yaml_of_vec vec) ^ "]"
 	| Ref r -> string_of_ref r
 
+
+(*******************************************************************
+ * convert JSON to the semantics domain
+ *******************************************************************)
+
+and from_json s : value =
+	let reference_separator = Str.regexp "\\." in
+	let rec sfp_of x : value =
+		let rec make_vector acc vec : vector =
+			match vec with
+			| []           -> acc
+			| head :: tail -> (
+					match sfp_of head with
+					| Basic bv -> (make_vector (bv :: acc) tail)
+					| _        -> error 802
+				)
+		in
+		let rec make_store acc s : store =
+			match s with
+			| []              -> acc
+			| (id, v) :: tail -> make_store ((id, (sfp_of v)) :: acc) tail
+		in
+		match x with
+		| `String str when (String.length str) > 2 && str.[0] = '$' && str.[1] = '.' ->
+				Basic (Ref (List.tl (Str.split reference_separator str)))
+		| `String str -> Basic (String str)
+		| `Bool b     -> Basic (Boolean b)
+		| `Float f    -> Basic (Float f)
+		| `Int i      -> Basic (Int i)
+		| `Null       -> Basic Null
+		| `List vec   -> Basic (Vector (make_vector [] vec))
+		| `Assoc s    -> Store (make_store [] s)
+	in
+	sfp_of (from_string s)
+
 (*******************************************************************
  * convert the semantics domains to JSON
  *******************************************************************)
+
 and json_of_store s = "{" ^ (json_of_store1 s) ^ "}"
 
 and json_of_store1 s =
@@ -301,7 +338,7 @@ and json_of_basic v =
 	| Boolean b -> string_of_bool b
 	| Int i -> string_of_int i
 	| Float f -> string_of_float f
-	| String s -> "\"" ^ s ^ "\""
+	| String s ->  "\"" ^ s ^ "\""
 	| Null -> "null"
 	| Vector vec -> "[" ^ (json_of_vec vec) ^ "]"
 	| Ref r -> "\"" ^ (string_of_ref r) ^ "\""

@@ -104,7 +104,7 @@ val json_of_value : value -> string
 val json_of_constraint : _constraint -> string
 
 
-val reference_of_string : string -> reference
+val from_json : string -> value
 
 (*******************************************************************
  * Flat-Store domain

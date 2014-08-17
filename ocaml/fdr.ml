@@ -20,7 +20,7 @@ let of_variables (buf: Buffer.t) (vars: Variable.ts) : unit =
 	Buffer.add_char buf '\n';
 	Buffer.add_string buf (string_of_int (Variable.total vars));
 	Variable.iter (fun var ->
-		Buffer.add_string buf "\nbegin_variable\nvar";
+		Buffer.add_string buf "\nbegin_variable\n";
 		Buffer.add_string buf (string_of_int (Variable.index var));
 		Buffer.add_char buf '_';
 		Buffer.add_string buf !^(Variable.name var);
@@ -100,11 +100,11 @@ let of_mutex (buf: Buffer.t) (vars: Variable.ts) : unit =
 let of_action (buffer: Buffer.t) ((name, params, cost, pre, eff): Action.t) (vars: Variable.ts) counter : unit =
 	let valid_operator = ref true in
 	let buf = Buffer.create 50 in
-	Buffer.add_string buf "\nbegin_operator\nop_";
+	Buffer.add_string buf "\nbegin_operator\n";
 	(* name *)
-	Buffer.add_string buf (string_of_int !counter);
-	Buffer.add_char buf ' ';
-	Buffer.add_string buf (Action.encode_name name params);
+	(* Buffer.add_string buf (string_of_int !counter);
+	Buffer.add_char buf ' '; *)
+	Buffer.add_string buf (Action.encode_name !counter name params);
 	Buffer.add_char buf '\n';
 	(* prevail *)
 	let prevail = Buffer.create 50 in

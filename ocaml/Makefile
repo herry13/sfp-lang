@@ -9,10 +9,10 @@ NAME=csfp
 
 ifeq ($(NATIVE),1)
 # native compiler
-COMPILER=ocamlopt -S
+COMPILER=ocamlfind ocamlopt -S -package yojson -linkpkg
 else
 # byte code compiler
-COMPILER=ocamlc
+COMPILER=ocamlfind ocamlc -package yojson -linkpkg
 endif
 
 # byte code libraries

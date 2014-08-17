@@ -17,8 +17,33 @@ let json_of_parameters (ps: basic MapStr.t) : string =
 	if Buffer.length buf <= 1 then "{}"
 	else (Buffer.sub buf 0 ((Buffer.length buf) - 1)) ^ "}"
 
-let encode_name (name: reference) (ps: basic MapStr.t) : string =
-	!^name ^ " " ^ (json_of_parameters ps)
+let encode_name (id: int) (name: reference) (ps: basic MapStr.t) : string =
+	(string_of_int id) ^ " \"" ^ !^name ^ "\" " ^ (json_of_parameters ps)
+
+let decode_name (s: string): int * reference * basic MapStr.t =
+	let rec iter_param (map: basic MapStr.t) ps =
+		match ps with
+		| [] -> map
+		| (id, _) :: tail when id = "this" -> iter_param map tail
+		| (id, (Basic v)) :: tail -> iter_param (MapStr.add id v map) tail
+		| _ -> error 806
+	in
+	match Str.bounded_split (Str.regexp " ") s 3 with
+	| s1 :: s2 :: s3 :: [] -> (
+			let id = int_of_string s1 in
+			let name =
+				match from_json s2 with
+				| Basic (Ref r) -> r
+				| _ -> error 803
+			in
+			let params =
+				match from_json s3 with
+				| Store s -> iter_param MapStr.empty s
+				| _       -> error 805
+			in
+			(id, name, params)
+		)
+	| _ -> error 804
 
 let json_of_preconditions (pre: basic MapRef.t) : string =
 	let buf = Buffer.create 42 in
