@@ -42,7 +42,7 @@ let fd_plan init goal =
 		let fdr = Fdr.of_sfp (ast_of_file init) (ast_of_file goal) in
 		(* save FDR to sas_file *)
 		let channel = open_out sas_file in
-		output_string channel fdr;
+		output_string channel (Fdr.string_of fdr);
 		close_out channel;
 		(* invoke preprocessor *)
 		let cmd = preprocessor ^ " < " ^ sas_file in
@@ -58,8 +58,8 @@ let fd_plan init goal =
 				let s       = String.create n in
 				really_input channel s 0 n;
 				close_in channel;
-				let plan = Plan.from_fast_downward s in
-				"\n\nSolution plan:\n" ^ (Plan.to_string plan)
+				let plan = Fdr.fdr_to_sfp_plan s in
+				"\n\nSolution plan:\n" ^ (Plan.string_of_seq plan)
 			)
 			else "No solution!"
 		in
@@ -106,7 +106,8 @@ let main =
 	in
 	let do_fdr = fun () ->
 		verify_files();
-		print_endline (Fdr.of_sfp (ast_of_file !opt_init_file) (ast_of_file !opt_goal_file))
+		let fdr = Fdr.of_sfp (ast_of_file !opt_init_file) (ast_of_file !opt_goal_file) in
+		print_endline (Fdr.string_of fdr)
 	in
 	let do_fd = fun mode ->
 		verify_files();

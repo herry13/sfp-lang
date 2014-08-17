@@ -1,6 +1,9 @@
 open Common
 open Domain
 
+type t = { str: string; variables: Variable.ts; actions: Action.ts }
+
+
 (*******************************************************************
  * functions for translating SFP to FDR
  *******************************************************************)
@@ -102,8 +105,6 @@ let of_action (buffer: Buffer.t) ((name, params, cost, pre, eff): Action.t) (var
 	let buf = Buffer.create 50 in
 	Buffer.add_string buf "\nbegin_operator\n";
 	(* name *)
-	(* Buffer.add_string buf (string_of_int !counter);
-	Buffer.add_char buf ' '; *)
 	Buffer.add_string buf (Action.encode_name !counter name params);
 	Buffer.add_char buf '\n';
 	(* prevail *)
@@ -161,10 +162,10 @@ let of_action (buffer: Buffer.t) ((name, params, cost, pre, eff): Action.t) (var
 	else prerr_endline ("Warning: operator " ^ !^name ^ " is invalid")
 
 (* generate FDR of a set of actions *)
-let of_actions (buf: Buffer.t) (actions: Action.t list) (vars: Variable.ts) : unit =
+let of_actions (buf: Buffer.t) (actions: Action.ts) (vars: Variable.ts) : unit =
 	let counter = ref 0 in
 	let buf_actions = Buffer.create 50 in
-	List.iter (fun a -> of_action buf_actions a vars counter) actions;
+	Action.iter (fun a -> of_action buf_actions a vars counter) actions;
 	Buffer.add_char buf '\n';
 	Buffer.add_string buf (string_of_int !counter);
 	Buffer.add_string buf (Buffer.contents buf_actions);;
@@ -173,7 +174,7 @@ let of_actions (buf: Buffer.t) (actions: Action.t list) (vars: Variable.ts) : un
 let of_axioms (buf: Buffer.t) : unit =
 	Buffer.add_string buf "\n0";;
 
-let of_sfp (ast_0: Syntax.sfp) (ast_g: Syntax.sfp) : string =
+let of_sfp (ast_0: Syntax.sfp) (ast_g: Syntax.sfp) : t = (* (string * Variable.ts * Action.ts) = *)
 	(* step 0: parse the specification and generate a store *)
 	let env_0 = Type.sfpSpecification ast_0 in
 	let store_0 = Valuation.sfpSpecification ast_0 in
@@ -200,4 +201,12 @@ let of_sfp (ast_0: Syntax.sfp) (ast_g: Syntax.sfp) : string =
 	of_goal buffer vars1 (global <> True);
 	of_actions buffer actions vars1;
 	of_axioms buffer;
-	Buffer.contents buffer
+	{ str = Buffer.contents buffer; variables = vars1; actions = actions }
+
+let string_of (dat: t) : string = dat.str
+
+let actions_of (dat: t) : Action.ts = dat.actions
+
+let variables_of (dat: t) : Variable.ts = dat.variables
+
+let fdr_to_sfp_plan (s: string) : Plan.seq = []

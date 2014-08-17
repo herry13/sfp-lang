@@ -1,5 +1,3 @@
-type t = Action.t list
+type seq = Action.t list
 
-val from_fast_downward : string -> t
-
-val to_string : t -> string
+val string_of_seq : seq -> string

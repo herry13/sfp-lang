@@ -29,8 +29,8 @@ BYTECODELIB= \
 	constraint.cmo \
 	action.cmo \
 	valuation.cmo \
-	fdr.cmo \
 	plan.cmo \
+	fdr.cmo \
 	csfp.cmo
 
 # native code libraries
@@ -47,8 +47,8 @@ NATIVELIB= \
 	constraint.cmx \
 	action.cmx \
 	valuation.cmx \
-	fdr.cmx \
 	plan.cmx \
+	fdr.cmx \
 	csfp.cmx
 
 # default
@@ -106,7 +106,7 @@ action: common domain type variable constraint action.mli action.ml
 	$(COMPILER) -c action.mli
 	$(COMPILER) -c action.ml
 
-fdr: common domain type variable constraint action fdr.mli fdr.ml
+fdr: common domain type variable constraint action plan fdr.mli fdr.ml
 	$(COMPILER) -c fdr.mli
 	$(COMPILER) -c fdr.ml
 

@@ -4,6 +4,17 @@ open Domain
 
 type t = reference * basic MapStr.t * cost * basic MapRef.t * basic MapRef.t;;
 
+type ts = { total: int; actions: t list };;
+
+let iter (f: t -> unit) (acts: ts) : unit =
+	List.iter f acts.actions
+
+let fold (f: 'a -> t -> 'a) (acc: 'a) (acts: ts) : 'a = List.fold_left f acc acts.actions
+
+let add (a: t) (acts: ts) : ts = { total = acts.total + 1; actions = a :: acts.actions }
+
+let empty : ts = { total = 0; actions = [] }
+
 let json_of_parameters (ps: basic MapStr.t) : string =
 	let buf = Buffer.create 42 in
 	Buffer.add_char buf '{';
@@ -58,10 +69,9 @@ let json_of_preconditions (pre: basic MapRef.t) : string =
 
 let json_of_effects = json_of_preconditions;;
 
-let json_of (a: t) : string =
-	let (name, ps, cost, pre, eff) = a in
+let json_of ((name, params, cost, pre, eff): t) : string =
 	sprintf "{\"name\":\"%s\",\"parameters\":%s,\"cost\":%d,\"conditions\":{%s},\"effects\":{%s}}"
-		!^name (json_of_parameters ps) cost (json_of_preconditions pre) (json_of_effects eff);;
+		!^name (json_of_parameters params) cost (json_of_preconditions pre) (json_of_effects eff);;
 
 let json_of_actions (actions: t list) : string =
 	match actions with
@@ -95,29 +105,29 @@ let equals_to_map = fun map c ->
 	| _         -> error 520
 
 (** for each clause of global constraints DNF, create a dummy action **)
-let create_global_actions (global: _constraint) (acc: t list) : t list =
+let create_global_actions (global: _constraint) (acc: ts) : ts =
 	let pre = MapRef.add Variable.r_dummy (Boolean false) MapRef.empty in
 	let eff = MapRef.add Variable.r_dummy (Boolean true) MapRef.empty in
 	let params = MapStr.empty in
 	let counter = ref 0 in
 	match global with
 	| True  -> acc
-	| Or cs -> List.fold_left (fun (acc1: t list) c ->
+	| Or cs -> List.fold_left (fun (acc1: ts) c ->
 			let name = ["!global" ^ (string_of_int !counter)] in
 			counter := !counter + 1;
 			match c with
 			| And css   ->
 				let pre1 = List.fold_left equals_to_map pre css in
-				(name, params, 0, pre1, eff) :: acc1
+				add (name, params, 0, pre1, eff) acc1
 			| Eq (r, v) ->
 				let pre1 = MapRef.add r v pre in
-				(name, params, 0, pre1, eff) :: acc1
+				add (name, params, 0, pre1, eff) acc1
 			| _         -> error 523
 		) acc cs
 	| And cs ->
 		let name = ["!global"] in
 		let pre1 = List.fold_left equals_to_map pre cs in
-		[(name, params, 0, pre1, eff)]
+		add (name, params, 0, pre1, eff) acc
 	| _      -> error 524
 
 (**
@@ -191,7 +201,7 @@ let compile_simple_implication pre eff vars g_implies =
  *
  * returns a list of grounded actions
  *)
-let ground_action_of (name, params, cost, pre, eff) env vars typevalue dummy (g_implies : _constraint list) : t list =
+let ground_action_of (name, params, cost, pre, eff) env vars typevalue dummy g_implies acc : ts =
 	let param_tables = create_parameter_table params name typevalue in
 	List.fold_left (fun acc1 ps ->
 		let eff1 = List.fold_left (fun acc (r, bv) ->
@@ -213,34 +223,34 @@ let ground_action_of (name, params, cost, pre, eff) env vars typevalue dummy (g_
 					| _         -> error 521
 				in
 				List.fold_left (fun acc3 pre4 ->
-					(name, ps, cost, pre4, eff2) :: acc3
+					add (name, ps, cost, pre4, eff2) acc3
 				) acc2 (compile_simple_implication pre3 eff2 vars g_implies)
 			) acc1 cs
 		| And css   ->
 			let pre3 = List.fold_left equals_to_map pre2 css in
 			List.fold_left (fun acc2 pre4 ->
-				(name, ps, cost, pre4, eff2) :: acc2
+				add (name, ps, cost, pre4, eff2) acc2
 			) acc1 (compile_simple_implication pre3 eff2 vars g_implies)
 		| Eq (r, v) ->
 			let pre3 = MapRef.add r v pre2 in
 			List.fold_left (fun acc2 pre4 ->
-				(name, ps, cost, pre4, eff2) :: acc2
+				add (name, ps, cost, pre4, eff2) acc2
 			) acc1 (compile_simple_implication pre3 eff2 vars g_implies)
 		| True      ->
 			List.fold_left (fun acc2 pre3 ->
-				(name, ps, cost, pre3, eff2) :: acc2
+				add (name, ps, cost, pre3, eff2) acc2
 			) acc1 (compile_simple_implication pre2 eff2 vars g_implies)
 		| _         -> error 522
-	) [] param_tables
+	) acc param_tables
 
 (* ground a set of actions - returns a list of grounded actions *)
-let ground_actions (env: Type.env) (vars: Variable.ts) (tvalues: Type.typevalue)
-                   (global: _constraint) (g_implies : _constraint list) : t list =
+let ground_actions (env: Type.env) (vars: Variable.ts) (tvalues: Type.typevalue) (global: _constraint)
+                   (g_implies : _constraint list) : ts =
 	let add_dummy = not (global = True) in
-	let actions : t list = create_global_actions global [] in
-	SetValue.fold (
-		fun v gactions ->
-			match v with
-			| Action a -> List.append (ground_action_of a env vars tvalues add_dummy g_implies) gactions
-			| _        -> gactions
+	let actions = create_global_actions global empty in
+	SetValue.fold (fun v acc ->
+		match v with
+		| Action a -> ground_action_of a env vars tvalues add_dummy g_implies acc
+		| _        -> acc
 	) (Type.values_of (Syntax.TBasic Syntax.TAction) tvalues) actions
+
