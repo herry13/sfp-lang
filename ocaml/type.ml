@@ -65,9 +65,10 @@ let rec domain (e: lenv) (r: reference) : bool =
 
 (* return true if type 't1' is a sub-type of 't2', otherwise false *)
 let rec (<:) (t1: _type) (t2: _type) : bool =                             (* Subtyping rules  *)
-	if t1 = t2 then true                                                  (* (Reflex)         *)
+	if t1 = t2 then true                                              (* (Reflex)         *)
 	else
 		match t1, t2 with
+		| TBasic TInt, TBasic TFloat         -> true                      (* TODO (IntFloat) *)
 		| TBasic (TSchema _), TBasic TObject -> true                      (* (Object Subtype) *)
 		| TBasic (TSchema (sid1, super1)), _ -> TBasic super1 <: t2       (* (Trans)          *)
 		| TVec tv1, TVec tv2                 -> tv1 <: tv2                (* (Vec Subtype)    *)
