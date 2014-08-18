@@ -131,3 +131,6 @@ linux: dist
 	@mv -f $(NAME) dist/linux
 
 travis: dist
+
+test:
+	@bash ../test/test-ocaml.sh
