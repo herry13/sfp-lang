@@ -15,6 +15,8 @@ let add (a: t) (acts: ts) : ts = { total = acts.total + 1; actions = a :: acts.a
 
 let empty : ts = { total = 0; actions = [] }
 
+let to_array (acts: ts) : t array = Array.of_list acts.actions
+
 let json_of_parameters (ps: basic MapStr.t) : string =
 	let buf = Buffer.create 42 in
 	Buffer.add_char buf '{';
@@ -70,7 +72,7 @@ let json_of_preconditions (pre: basic MapRef.t) : string =
 let json_of_effects = json_of_preconditions;;
 
 let json_of ((name, params, cost, pre, eff): t) : string =
-	sprintf "{\"name\":\"%s\",\"parameters\":%s,\"cost\":%d,\"conditions\":{%s},\"effects\":{%s}}"
+	sprintf "{\"name\":\"%s\",\"parameters\":%s,\"cost\":%d,\"conditions\":%s,\"effects\":%s}"
 		!^name (json_of_parameters params) cost (json_of_preconditions pre) (json_of_effects eff);;
 
 let json_of_actions (actions: t list) : string =

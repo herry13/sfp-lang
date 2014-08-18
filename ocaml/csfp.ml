@@ -58,8 +58,8 @@ let fd_plan init goal =
 				let s       = String.create n in
 				really_input channel s 0 n;
 				close_in channel;
-				let plan = Fdr.fdr_to_sfp_plan s in
-				"\n\nSolution plan:\n" ^ (Plan.string_of_seq plan)
+				let plan = Fdr.to_sfp_plan s fdr in
+				"\n\nSolution plan:\n" ^ (Plan.string_of_sequential plan)
 			)
 			else "No solution!"
 		in

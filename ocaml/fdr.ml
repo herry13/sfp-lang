@@ -1,7 +1,7 @@
 open Common
 open Domain
 
-type t = { str: string; variables: Variable.ts; actions: Action.ts }
+type t = { variables: Variable.ts; actions: Action.ts; global: _constraint }
 
 
 (*******************************************************************
@@ -192,21 +192,77 @@ let of_sfp (ast_0: Syntax.sfp) (ast_g: Syntax.sfp) : t = (* (string * Variable.t
 	let (global, g_implies, vars1) = Constraint.global_of env_g fs_g vars in
 	(* step 2.3 & 2.4: generate actions & compile global constraints *)
 	let actions = Action.ground_actions env_g vars1 tvalues global g_implies in
-	(* step 2.5: generate FDR *)
-	let buffer = Buffer.create (100 + (40 * (Variable.total vars) * 2)) in
-	of_header buffer;
-	of_variables buffer vars1;
-	of_mutex buffer vars1;
-	of_init buffer vars1;
-	of_goal buffer vars1 (global <> True);
-	of_actions buffer actions vars1;
-	of_axioms buffer;
-	{ str = Buffer.contents buffer; variables = vars1; actions = actions }
+	{ variables = vars1; actions = actions; global = global }
 
-let string_of (dat: t) : string = dat.str
+let string_of (dat: t) : string =
+	(* step 2.5: generate FDR *)
+	let buffer = Buffer.create (100 + (40 * (Variable.total dat.variables) * 2)) in
+	of_header buffer;
+	of_variables buffer dat.variables;
+	of_mutex buffer dat.variables;
+	of_init buffer dat.variables;
+	of_goal buffer dat.variables (dat.global <> True);
+	of_actions buffer dat.actions dat.variables;
+	of_axioms buffer;
+	Buffer.contents buffer
 
 let actions_of (dat: t) : Action.ts = dat.actions
 
 let variables_of (dat: t) : Variable.ts = dat.variables
 
-let fdr_to_sfp_plan (s: string) : Plan.seq = []
+(** convert an FDR plan (in string) to an SFP plan **)
+type temp_plan = { plan: Action.t list; prev: Action.t }
+
+(**
+ * @param s         string of FDR plan
+ * @param dat       FDR data that contains SFP variables and actions
+ * @param no_dummy  true to remove dummy operators (by merging their preconditions
+ *                  to the following action), false to keep dummy operators
+ *
+ * @return a sequential plan (list of actions)
+ *)
+let convert_fdr_to_sfp_plan (s: string) (dat: t) (no_dummy: bool) : Plan.sequential =
+	let merge pre1 pre2 =
+		let pre = MapRef.fold (fun r v pre ->
+				if (List.hd r).[0] = '!' then pre
+				else MapRef.add r v pre
+			) pre1 pre2
+		in
+		MapRef.remove Variable.r_dummy pre
+	in
+	let space = Str.regexp " " in
+	let actions = Action.to_array dat.actions in
+	let dummy = ([], MapStr.empty, 0, MapRef.empty, MapRef.empty) in
+	let temp = List.fold_left (fun acc line ->
+			let line = String.sub line 1 ((String.length line)-1) in
+			let parts = Str.bounded_split space line 3 in
+			let index = int_of_string (List.hd parts) in
+			if no_dummy then (
+				if (List.hd (List.tl parts)).[3] = '!' then ( (* a dummy operator: "$.!global" *)
+					if acc.prev = dummy then (
+						{ plan = acc.plan; prev = actions.(index) }
+					) else ( (* merge previous dummy operator with the current dummy *)
+						let (_, _, _, pre1, _) = acc.prev in
+						let (name, params, cost, pre2, eff) = actions.(index) in
+						let merge_action = (name, params, cost, (merge pre1 pre2), eff) in
+						{ plan = acc.plan; prev = merge_action }
+					)
+				) else ( (* not a dummy operator *)
+					if acc.prev = dummy then (
+						{ plan = actions.(index) :: acc.plan; prev = dummy }
+					) else ( (* merge previous dummy operator with the current one *)
+						let (_, _, _, pre_dummy, _) = acc.prev in
+						let (name, params, cost, pre, eff) = actions.(index) in
+						let eff = MapRef.remove Variable.r_dummy eff in
+						let merge_action = (name, params, cost, (merge pre_dummy pre), eff) in
+						{ plan = merge_action :: acc.plan; prev = dummy }
+					)
+				)
+			) else (
+				{ plan = actions.(index) :: acc.plan; prev = acc.prev }
+			)
+		) {plan = []; prev = dummy } (Str.split (Str.regexp "\n") s)
+	in
+	List.rev temp.plan
+
+let to_sfp_plan (s: string) (dat: t) : Plan.sequential = convert_fdr_to_sfp_plan s dat true

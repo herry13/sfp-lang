@@ -1,4 +1,4 @@
-type t = { str: string; variables: Variable.ts; actions: Action.ts }
+type t = { variables: Variable.ts; actions: Action.ts; global: Domain._constraint }
 
 val of_sfp : Syntax.sfp -> Syntax.sfp -> t
 
@@ -8,4 +8,4 @@ val variables_of : t -> Variable.ts
 
 val actions_of : t -> Action.ts
 
-val fdr_to_sfp_plan : string -> Plan.seq
+val to_sfp_plan : string -> t -> Plan.sequential

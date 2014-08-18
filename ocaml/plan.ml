@@ -2,20 +2,20 @@ open Common
 open Domain
 
 (* type Action.t = reference * basic MapStr.t * cost * basic MapRef.t * basic MapRef.t *)
-type seq = Action.t list
+type sequential = Action.t list
 
-(*
-let from_fast_downward (plan: string) : t =
-    List.fold_left (fun acc s ->
-		let (id, name, params) = Action.decode_name (String.sub s 1 ((String.length s)-2)) in
-		let a = (name, params, 0, MapRef.empty, MapRef.empty) in
-		a :: acc
-    ) [] (Str.split (Str.regexp "\n") plan)
+type parallel = { actions: Action.t array; precedences: (int list) array }
 
-let to_string (plan: t) : string =
-    List.fold_left (fun s (r, ps, _, _, _) ->
-		(Action.encode_name 0 r ps) ^ "\n" ^ s
-	) "" plan
-*)
+let string_of_sequential plan =
+	let buf = Buffer.create 42 in
+	List.iter (fun a ->
+		Buffer.add_string buf (Action.json_of a);
+		Buffer.add_string buf "\n";
+	) plan;
+	Buffer.contents buf
 
-let string_of_seq plan = ""
+(** convert a sequential to a parallel (partial-order) plan **)
+let parallel_of (seq: sequential) : parallel =
+	let actions = Array.of_list seq in
+	let precedences = [| |] in (* TODO -- generate the precedence constraints *)
+	{ actions = actions; precedences = precedences }

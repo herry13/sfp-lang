@@ -1,3 +1,7 @@
-type seq = Action.t list
+type sequential = Action.t list
 
-val string_of_seq : seq -> string
+type parallel = { actions: Action.t array; precedences: (int list) array }
+
+val string_of_sequential : sequential -> string
+
+val parallel_of : sequential -> parallel
