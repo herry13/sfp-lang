@@ -1,6 +1,7 @@
 #!/bin/bash
 
-BASEDIR="$(dirname '$0')"
+BASEDIR="$(dirname $0)"
+CURRENTDIR=$(pwd)
 OPT_TYPE="-type"
 OPT_JSON="-json"
 OPT_YAML="-yaml"
@@ -19,8 +20,10 @@ function test {
 	fi
 }
 
+cd $BASEDIR
+
 echo "=== running tests ==="
-filelist="good-test-files.txt"
+filelist="$BASEDIR/good-test-files.txt"
 for file in $(cat $filelist); do
 	# AST: -ast
 	test $file $OPT_AST
@@ -32,3 +35,5 @@ for file in $(cat $filelist); do
 	test $file $OPT_YAML
 done
 echo "=== done ==="
+
+cd $CURRENTDIR
