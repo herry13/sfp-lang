@@ -224,15 +224,10 @@ and accept s ns ss nss =
 (*******************************************************************
  * convert reference (list of string) to string
  *******************************************************************)
-let string_of_ref r = "$." ^ String.concat "." r
 
-let (!^) r = string_of_ref r
+let (!^) r = "$." ^ String.concat "." r
 
-let reference_of_string s =
-	let sep = Str.regexp "\\." in
-	let r = Str.split sep s in
-	if List.hd r = "$" then List.tl r
-	else error 900
+let string_of_ref r = !^r
 
 
 (*******************************************************************
@@ -274,7 +269,7 @@ and yaml_of_basic v =
 	| String s -> s
 	| Null -> "null"
 	| Vector vec -> "[" ^ (yaml_of_vec vec) ^ "]"
-	| Ref r -> string_of_ref r
+	| Ref r -> !^r
 
 
 (*******************************************************************
@@ -327,7 +322,7 @@ and json_of_cell id v = "\"" ^ id ^ "\":" ^ (json_of_value v)
 
 and json_of_value v =
 	match v with
-	| Link lr -> "\"link " ^(string_of_ref lr) ^ "\""
+	| Link lr -> "\"link " ^ !^lr ^ "\""
 	| Basic basic -> json_of_basic basic
 	| Store child -> "{" ^ json_of_store1 child ^ "}"
 	| Global global -> json_of_constraint global
@@ -341,7 +336,7 @@ and json_of_basic v =
 	| String s ->  "\"" ^ s ^ "\""
 	| Null -> "null"
 	| Vector vec -> "[" ^ (json_of_vec vec) ^ "]"
-	| Ref r -> "\"" ^ (string_of_ref r) ^ "\""
+	| Ref r -> "\"" ^ !^r ^ "\""
 
 and json_of_vec vec =
 	match vec with
