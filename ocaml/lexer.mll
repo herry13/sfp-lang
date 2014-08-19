@@ -124,9 +124,9 @@ rule token =
 	| action      { ACTION }
 	| '"'         { STRING (read_string (Buffer.create 17) lexbuf) }
 	| ident       {
-	                let id = Lexing.lexeme lexbuf in
-	                if is_keyword id then raise (SyntaxError (id ^ " is a reserved identifier"))
-	                else ID id
+	              	let id = Lexing.lexeme lexbuf in
+	               if is_keyword id then raise (SyntaxError (id ^ " is a reserved identifier"))
+	              	else ID id
 	              }
 	| eof         { EOF }
 
@@ -148,10 +148,11 @@ and read_string buf =
 	                	read_string buf lexbuf
 	                }
 	| _             { raise (SyntaxError ("Illegal string character: " ^ Lexing.lexeme lexbuf)) }
-	| eof           { raise (SyntaxError ("String is not terminated")) }
+	| eof           { raise (SyntaxError "String is not terminated") }
 
 and read_comments =
 	parse
 	| '*' '/'  { }
 	| '\n'     { next_line lexbuf; read_comments lexbuf }
 	| _        { read_comments lexbuf }
+	| eof      { raise (SyntaxError "Comment is not terminated.") }
