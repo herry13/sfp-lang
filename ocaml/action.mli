@@ -22,11 +22,6 @@ val empty : ts
 
 val to_array : ts -> t array
 
-val threat : t -> t -> bool
-
-val support : t -> t -> bool
-
-
 
 val encode_name : int -> reference -> basic MapStr.t -> string
 

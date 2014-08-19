@@ -263,8 +263,10 @@ let convert_fdr_to_sfp_plan (s: string) (dat: t) (no_dummy: bool) : Plan.sequent
 			)
 		) {plan = []; prev = dummy } (Str.split (Str.regexp "\n") s)
 	in
-	List.rev temp.plan
+	Array.of_list (List.rev temp.plan)
 
-let to_sfp_plan (s: string) (dat: t) : Plan.sequential = convert_fdr_to_sfp_plan s dat true
+let to_sfp_plan (s: string) (dat: t) : Plan.sequential =
+	convert_fdr_to_sfp_plan s dat true
 
-let to_raw_sfp_plan (s: string) (dat: t): Plan.sequential = convert_fdr_to_sfp_plan s dat false
+let to_raw_sfp_plan (s: string) (dat: t): Plan.sequential =
+	convert_fdr_to_sfp_plan s dat false

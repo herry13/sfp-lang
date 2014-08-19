@@ -277,17 +277,3 @@ let ground_actions (env: Type.env) (vars: Variable.ts) (tvalues: Type.typevalue)
 		| Action a -> ground_action_of a env vars tvalues add_dummy g_implies acc
 		| _        -> acc
 	) (Type.values_of (Syntax.TBasic Syntax.TAction) tvalues) actions
-
-
-(******************************************************************************
- * Functions that return the relation between two or more actions
- ******************************************************************************)
-
-let threat ((_, _, _, _, eff1): t) ((_, _, _, pre2, eff2): t) : bool =
-	MapRef.exists (fun r v ->
-		((MapRef.mem r pre2) && ((MapRef.find r pre2) <> v)) ||
-		((MapRef.mem r eff2) && ((MapRef.find r eff2) <> v))
-	) eff1
-	
-let support ((_, _, _, _, eff): t) ((_, _, _, pre, _): t) : bool =
-	MapRef.exists (fun r v -> (MapRef.mem r pre) && ((MapRef.find r pre) = v)) eff
