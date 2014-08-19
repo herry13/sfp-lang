@@ -16,10 +16,20 @@ This is the implementation of the formal semantic of SFP language. Supporting fe
 - Finite Domain Representation ([FDR](http://www.fast-downward.org/TranslatorOutputFormat)) generator for planning
 
 
+Under development features:
+- Partial-order plan generator
+- _Loose_ specification: `any` value, `final` constraints, etc
+- Enumeration
+- Virtual resource
+- _Greater_ and _less than_ operator in constraints for integer/float domains
+- String concatenation
+
+
 To build
 --------
 Requirement:
 - OCaml >= 3.12.1
+- Yojson >= 1.1.8 (it can be installed via OPAM: `opam install yojson`)
 
 Compile:
 
@@ -42,7 +52,7 @@ This will parse the specification and generate the final result in JSON. In addi
 - `./csfp -yaml spec.sfp` : evaluate every element and generate the final result in YAML.
 - `./csfp -fs spec.sfp` : print variables and their values in a flat-structure.
 - `./csfp -init init.sfp -goal goal.sfp -fdr` : given an initial state in `init.sfp` and a goal state in `goal.sfp`, generate and print a Finite Domain Representation of this configuration task -- the output can be given to the FastDownward search engine to find a solution plan.
-- `./csfp -fd -init init.sfp -goal goal.sfp -fd` :  given an initial state in `init.sfp` and a goal state in `goal.sfp`, generate and print the solution plan of this configuration task -- note that environment variable `FD_PREPROCESSOR` and `FD_SEARCH` must be set with the path of the FastDownward preprocessor and search engine respectively.
+- `./csfp -fd -init init.sfp -goal goal.sfp -fd` :  given an initial state in `init.sfp` and a goal state in `goal.sfp`, generate and print the solution plan of this configuration task. **Note**: environment variable `FD_PREPROCESSOR` and `FD_SEARCH` must be set with the path of the FastDownward preprocessor and search engine respectively.
 
 
 Example
@@ -89,6 +99,7 @@ The following files specify the model, the initial, and the goal state of a conf
 
 **init.sfp**:
 
+	// file: init.sfp
 	include "system1-model.sfp";
 	main {
 	  s1 isa Machine {
@@ -106,6 +117,7 @@ The following files specify the model, the initial, and the goal state of a conf
 
 **goal.sfp**:
 
+	// file: goal.sfp
 	include "system1-model.sfp";
 	main {
 	  s1 isa Machine {
