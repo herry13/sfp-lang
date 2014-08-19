@@ -2,9 +2,16 @@ open Printf
 open Common
 open Domain
 
+(** type of a single action **)
 type t = reference * basic MapStr.t * cost * basic MapRef.t * basic MapRef.t;;
 
+(** type of a collection of actions **)
 type ts = { total: int; actions: t list };;
+
+
+(******************************************************************************
+ * Functions to operate over a collection of actions (ts)
+ ******************************************************************************)
 
 let iter (f: t -> unit) (acts: ts) : unit =
 	List.iter f acts.actions
@@ -16,6 +23,11 @@ let add (a: t) (acts: ts) : ts = { total = acts.total + 1; actions = a :: acts.a
 let empty : ts = { total = 0; actions = [] }
 
 let to_array (acts: ts) : t array = Array.of_list acts.actions
+
+
+(******************************************************************************
+ * Functions to generate JSON of actions.
+ ******************************************************************************)
 
 let json_of_parameters (ps: basic MapStr.t) : string =
 	let buf = Buffer.create 42 in
@@ -29,6 +41,34 @@ let json_of_parameters (ps: basic MapStr.t) : string =
 	) ps;
 	if Buffer.length buf <= 1 then "{}"
 	else (Buffer.sub buf 0 ((Buffer.length buf) - 1)) ^ "}"
+
+let json_of_preconditions (pre: basic MapRef.t) : string =
+	let buf = Buffer.create 42 in
+	MapRef.iter (fun r v ->
+		Buffer.add_string buf ",\"";
+		Buffer.add_string buf !^r;
+		Buffer.add_string buf "\":";
+		Buffer.add_string buf (json_of_value (Basic v))
+	) pre;
+	let s = Buffer.contents buf in
+	if s = "" then "{}" else "{" ^ (String.sub s 1 ((String.length s) -1)) ^ "}";;
+
+let json_of_effects = json_of_preconditions;;
+
+let json_of ((name, params, cost, pre, eff): t) : string =
+	sprintf "{\"name\":\"%s\",\"parameters\":%s,\"cost\":%d,\"conditions\":%s,\"effects\":%s}"
+		!^name (json_of_parameters params) cost (json_of_preconditions pre) (json_of_effects eff);;
+
+let json_of_actions (actions: t list) : string =
+	match actions with
+	| [] -> "[]"
+	| act :: [] -> "[" ^ (json_of act) ^ "]"
+	| act :: acts -> "[" ^ (json_of act) ^ (List.fold_left (fun s a -> s ^ "," ^ (json_of a)) "" acts) ^ "]"
+
+
+(******************************************************************************
+ * Functions to encode/decode actions' name. This will be used in FDR.
+ ******************************************************************************)
 
 let encode_name (id: int) (name: reference) (ps: basic MapStr.t) : string =
 	(string_of_int id) ^ " \"" ^ !^name ^ "\" " ^ (json_of_parameters ps)
@@ -58,28 +98,10 @@ let decode_name (s: string): int * reference * basic MapStr.t =
 		)
 	| _ -> error 804
 
-let json_of_preconditions (pre: basic MapRef.t) : string =
-	let buf = Buffer.create 42 in
-	MapRef.iter (fun r v ->
-		Buffer.add_string buf ",\"";
-		Buffer.add_string buf !^r;
-		Buffer.add_string buf "\":";
-		Buffer.add_string buf (json_of_value (Basic v))
-	) pre;
-	let s = Buffer.contents buf in
-	if s = "" then "{}" else "{" ^ (String.sub s 1 ((String.length s) -1)) ^ "}";;
 
-let json_of_effects = json_of_preconditions;;
-
-let json_of ((name, params, cost, pre, eff): t) : string =
-	sprintf "{\"name\":\"%s\",\"parameters\":%s,\"cost\":%d,\"conditions\":%s,\"effects\":%s}"
-		!^name (json_of_parameters params) cost (json_of_preconditions pre) (json_of_effects eff);;
-
-let json_of_actions (actions: t list) : string =
-	match actions with
-	| [] -> "[]"
-	| act :: [] -> "[" ^ (json_of act) ^ "]"
-	| act :: acts -> "[" ^ (json_of act) ^ (List.fold_left (fun s a -> s ^ "," ^ (json_of a)) "" acts) ^ "]"
+(******************************************************************************
+ * Functions to ground actions.
+ ******************************************************************************)
 
 (* convert a list of (identifier => type) to a list of maps of (identifier => value) *)
 let create_parameter_table params name (tvalues: Type.typevalue) =
@@ -256,3 +278,16 @@ let ground_actions (env: Type.env) (vars: Variable.ts) (tvalues: Type.typevalue)
 		| _        -> acc
 	) (Type.values_of (Syntax.TBasic Syntax.TAction) tvalues) actions
 
+
+(******************************************************************************
+ * Functions that return the relation between two or more actions
+ ******************************************************************************)
+
+let threat ((_, _, _, _, eff1): t) ((_, _, _, pre2, eff2): t) : bool =
+	MapRef.exists (fun r v ->
+		((MapRef.mem r pre2) && ((MapRef.find r pre2) <> v)) ||
+		((MapRef.mem r eff2) && ((MapRef.find r eff2) <> v))
+	) eff1
+	
+let support ((_, _, _, _, eff): t) ((_, _, _, pre, _): t) : bool =
+	MapRef.exists (fun r v -> (MapRef.mem r pre) && ((MapRef.find r pre) = v)) eff

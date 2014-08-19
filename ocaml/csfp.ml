@@ -59,7 +59,8 @@ let fd_plan init goal =
 				really_input channel s 0 n;
 				close_in channel;
 				let plan = Fdr.to_sfp_plan s fdr in
-				"\n\nSolution plan:\n" ^ (Plan.string_of_sequential plan)
+				let plan = Plan.parallel_of plan in
+				"\n\nSolution plan:\n" ^ (Plan.json_of_parallel plan)
 			)
 			else "No solution!"
 		in

@@ -421,5 +421,6 @@ let global_of (env: Type.env) (fs: Domain.flatstore) (vars: Variable.ts) : (_con
 			let (global1, implies1, vars1) = compile_simple_global g vars in
 			let global_dnf = dnf_of global1 vars1 env in
 			(global_dnf, implies1, vars1)
+			(* (dnf_of g vars env, [], vars) *)
 		| _        -> error 519
 	else (True, [], vars)

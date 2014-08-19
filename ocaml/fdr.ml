@@ -266,3 +266,5 @@ let convert_fdr_to_sfp_plan (s: string) (dat: t) (no_dummy: bool) : Plan.sequent
 	List.rev temp.plan
 
 let to_sfp_plan (s: string) (dat: t) : Plan.sequential = convert_fdr_to_sfp_plan s dat true
+
+let to_raw_sfp_plan (s: string) (dat: t): Plan.sequential = convert_fdr_to_sfp_plan s dat false
