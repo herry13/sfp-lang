@@ -1,5 +1,8 @@
 open Syntax
 
+let r_main = ["main"]
+let r_global = ["global"]
+
 let sfBoolean b = if b = "true" then Domain.Boolean true else Domain.Boolean false
 
 let sfInt n = Domain.Int (int_of_string n)
@@ -86,30 +89,32 @@ and sfpContext ctx =
 		| G_C (g, c)   -> sfpContext c (sfpGlobal g s)
 		| EmptyContext -> s
 
-and sfpSpecification sfp =
-	let r = ["main"] in
-	let s1 = sfpContext sfp [] in
-	let v1 = Domain.find s1 r in
+and sfpSpecificationFirstPass sfp = sfpContext sfp []
+
+and sfpSpecificationSecondPass sfp =
+	let s1 = sfpSpecificationFirstPass sfp in
 	let s2 =
-		match v1 with
-		| Domain.Val (Domain.Store s) -> Domain.accept s1 r s r
+		match Domain.find s1 r_main with
+		| Domain.Val (Domain.Store main1) -> Domain.accept s1 r_main main1 r_main
 		| _ -> Domain.error 11
 	in
-	if Domain.tbd_exists s2 then Domain.error 12
-	else (
-		let v2 = Domain.find s2 r in
-		let rg = ["global"] in
-		let add_global s =
-			match Domain.find s1 rg with
-			| Domain.Undefined -> s
-			| Domain.Val (Domain.Global vg) -> Domain.bind s rg (Domain.Global vg)
-			| _ -> Domain.error 12
-		in
-		match v2 with
-		| Domain.Val (Domain.Store s) -> add_global s
-		| _ -> Domain.error 11
-	)
-	
+	let add_global s =
+		match Domain.find s1 r_global with
+		| Domain.Undefined -> s
+		| Domain.Val (Domain.Global global) -> Domain.bind s r_global (Domain.Global global)
+		| _ -> Domain.error 12
+	in
+	match Domain.find s2 r_main with
+	| Domain.Val (Domain.Store main2) -> add_global main2
+	| _ -> Domain.error 13
+
+and sfpSpecificationThirdPass sfp =
+	let s2 = sfpSpecificationSecondPass sfp in
+	if Domain.tbd_exists s2 then Domain.error 14
+	else s2
+
+and sfpSpecification sfp = sfpSpecificationThirdPass sfp
+
 
 (** global constraints **)
 and sfpGlobal g =
