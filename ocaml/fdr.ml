@@ -1,8 +1,9 @@
 open Common
 open Domain
 
-type t = { variables: Variable.ts; actions: Action.ts; global: _constraint }
+module A = Action
 
+type t = { variables: Variable.ts; actions: A.ts; global: _constraint }
 
 (*******************************************************************
  * functions for translating SFP to FDR
@@ -100,16 +101,18 @@ let of_mutex (buf: Buffer.t) (vars: Variable.ts) : unit =
  * Generate the FDR of a given action. If there is an assignment whose value is not
  * in the variable's domain, then the action is treated as "invalid".
  *)
-let of_action (buffer: Buffer.t) ((name, params, cost, pre, eff): Action.t) (vars: Variable.ts) counter : unit =
+let of_action (buffer: Buffer.t) (a: A.t) (vars: Variable.ts) counter : unit =
 	let valid_operator = ref true in
 	let buf = Buffer.create 50 in
 	Buffer.add_string buf "\nbegin_operator\n";
 	(* name *)
-	Buffer.add_string buf (Action.encode_name !counter name params);
+	Buffer.add_string buf (A.encode_name !counter a);
 	Buffer.add_char buf '\n';
 	(* prevail *)
 	let prevail = Buffer.create 50 in
 	let n = ref 0 in
+	let pre = A.preconditions a in
+	let eff = A.effects a in
 	MapRef.iter (fun r v ->
 		if not (MapRef.mem r eff) then
 		(
@@ -154,18 +157,18 @@ let of_action (buffer: Buffer.t) ((name, params, cost, pre, eff): Action.t) (var
 	(* check operator validity *)
 	if !valid_operator then (
 		(* cost *)
-		Buffer.add_string buf (string_of_int cost);
+		Buffer.add_string buf (string_of_int (A.cost a));
 		Buffer.add_string buf "\nend_operator";
 		Buffer.add_string buffer (Buffer.contents buf);
 		counter := !counter + 1
 	)
-	else prerr_endline ("Warning: operator " ^ !^name ^ " is invalid")
+	else prerr_endline ("Warning: operator " ^ !^(A.name a) ^ " is invalid")
 
 (* generate FDR of a set of actions *)
-let of_actions (buf: Buffer.t) (actions: Action.ts) (vars: Variable.ts) : unit =
+let of_actions (buf: Buffer.t) (actions: A.ts) (vars: Variable.ts) : unit =
 	let counter = ref 0 in
 	let buf_actions = Buffer.create 50 in
-	Action.iter (fun a -> of_action buf_actions a vars counter) actions;
+	A.iter (fun a -> of_action buf_actions a vars counter) actions;
 	Buffer.add_char buf '\n';
 	Buffer.add_string buf (string_of_int !counter);
 	Buffer.add_string buf (Buffer.contents buf_actions);;
@@ -174,7 +177,7 @@ let of_actions (buf: Buffer.t) (actions: Action.ts) (vars: Variable.ts) : unit =
 let of_axioms (buf: Buffer.t) : unit =
 	Buffer.add_string buf "\n0";;
 
-let of_sfp (ast_0: Syntax.sfp) (ast_g: Syntax.sfp) : t = (* (string * Variable.ts * Action.ts) = *)
+let of_sfp (ast_0: Syntax.sfp) (ast_g: Syntax.sfp) : t =
 	(* step 0: parse the specification and generate a store *)
 	let env_0 = Type.sfpSpecification ast_0 in
 	let store_0 = Valuation.sfpSpecification ast_0 in
@@ -191,7 +194,7 @@ let of_sfp (ast_0: Syntax.sfp) (ast_g: Syntax.sfp) : t = (* (string * Variable.t
 	(* step 2.2: global constraints *)
 	let (global, g_implies, vars1) = Constraint.global_of env_g fs_g vars in
 	(* step 2.3 & 2.4: generate actions & compile global constraints *)
-	let actions = Action.ground_actions env_g vars1 tvalues global g_implies in
+	let actions = A.ground_actions env_g vars1 tvalues global g_implies in
 	{ variables = vars1; actions = actions; global = global }
 
 let string_of (dat: t) : string =
@@ -206,12 +209,12 @@ let string_of (dat: t) : string =
 	of_axioms buffer;
 	Buffer.contents buffer
 
-let actions_of (dat: t) : Action.ts = dat.actions
+let actions_of (dat: t) : A.ts = dat.actions
 
 let variables_of (dat: t) : Variable.ts = dat.variables
 
 (** convert an FDR plan (in string) to an SFP plan **)
-type temp_plan = { plan: Action.t list; prev: Action.t }
+type temp_plan = { plan: A.t list; prev: A.t }
 
 (**
  * @param s         string of FDR plan
@@ -231,8 +234,8 @@ let convert_fdr_to_sfp_plan (s: string) (dat: t) (no_dummy: bool) : Plan.sequent
 		MapRef.remove Variable.r_dummy pre
 	in
 	let space = Str.regexp " " in
-	let actions = Action.to_array dat.actions in
-	let dummy = ([], MapStr.empty, 0, MapRef.empty, MapRef.empty) in
+	let actions = A.to_array dat.actions in
+	let dummy = A.make [] MapStr.empty 0 MapRef.empty MapRef.empty in
 	let temp = List.fold_left (fun acc line ->
 			let line = String.sub line 1 ((String.length line)-1) in
 			let parts = Str.bounded_split space line 3 in
@@ -242,20 +245,21 @@ let convert_fdr_to_sfp_plan (s: string) (dat: t) (no_dummy: bool) : Plan.sequent
 					if acc.prev = dummy then (
 						{ plan = acc.plan; prev = actions.(index) }
 					) else ( (* merge previous dummy operator with the current dummy *)
-						let (_, _, _, pre1, _) = acc.prev in
-						let (name, params, cost, pre2, eff) = actions.(index) in
-						let merge_action = (name, params, cost, (merge pre1 pre2), eff) in
-						{ plan = acc.plan; prev = merge_action }
+						let a = actions.(index) in
+						let pre = merge (A.preconditions acc.prev) (A.preconditions a) in
+						let a1 = A.make (A.name a) (A.parameters a) (A.cost a) pre (A.effects a) in
+						{ plan = acc.plan; prev = a1 }
 					)
 				) else ( (* not a dummy operator *)
 					if acc.prev = dummy then (
 						{ plan = actions.(index) :: acc.plan; prev = dummy }
 					) else ( (* merge previous dummy operator with the current one *)
-						let (_, _, _, pre_dummy, _) = acc.prev in
-						let (name, params, cost, pre, eff) = actions.(index) in
-						let eff = MapRef.remove Variable.r_dummy eff in
-						let merge_action = (name, params, cost, (merge pre_dummy pre), eff) in
-						{ plan = merge_action :: acc.plan; prev = dummy }
+						let pre_dummy = A.preconditions acc.prev in
+						let a = actions.(index) in
+						let pre = A.preconditions a in
+						let eff = MapRef.remove Variable.r_dummy (A.effects a) in
+						let a1 = A.make (A.name a) (A.parameters a) (A.cost a) (merge pre_dummy pre) eff in
+						{ plan = a1 :: acc.plan; prev = dummy }
 					)
 				)
 			) else (

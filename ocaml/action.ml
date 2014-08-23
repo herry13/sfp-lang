@@ -3,75 +3,145 @@ open Common
 open Domain
 
 (** type of a single action **)
-type t = reference * basic MapStr.t * cost * basic MapRef.t * basic MapRef.t;;
+(*type t = reference * basic MapStr.t * cost * basic MapRef.t * basic MapRef.t;;*)
+type t = {
+	name: reference;
+	parameters: basic MapStr.t;
+	cost: cost;
+	preconditions: basic MapRef.t;
+	effects: basic MapRef.t
+}
 
 (** type of a collection of actions **)
 type ts = { total: int; actions: t list };;
+
+
+let make name params cost pre eff =
+	{ name = name; parameters = params; cost = cost; preconditions = pre; effects = eff };;
+	
+let name a = a.name;;
+let parameters a = a.parameters;;
+let cost a = a.cost;;
+let preconditions a = a.preconditions;;
+let effects a = a.effects;;
 
 
 (******************************************************************************
  * Functions to operate over a collection of actions (ts)
  ******************************************************************************)
 
-let iter (f: t -> unit) (acts: ts) : unit =
-	List.iter f acts.actions
+let iter (f: t -> unit) (acts: ts) : unit = List.iter f acts.actions;;
 
-let fold (f: 'a -> t -> 'a) (acc: 'a) (acts: ts) : 'a = List.fold_left f acc acts.actions
+let fold (f: 'a -> t -> 'a) (acc: 'a) (acts: ts) : 'a = List.fold_left f acc acts.actions;;
 
-let add (a: t) (acts: ts) : ts = { total = acts.total + 1; actions = a :: acts.actions }
+let add (a: t) (acts: ts) : ts = { total = acts.total + 1; actions = a :: acts.actions };;
 
-let empty : ts = { total = 0; actions = [] }
+let empty : ts = { total = 0; actions = [] };;
 
-let to_array (acts: ts) : t array = Array.of_list acts.actions
+let to_array (acts: ts) : t array = Array.of_list acts.actions;;
 
 
 (******************************************************************************
  * Functions to generate JSON of actions.
  ******************************************************************************)
 
-let json_of_parameters (ps: basic MapStr.t) : string =
-	let buf = Buffer.create 42 in
+
+
+let json_of_parameters (buf: Buffer.t) (ps: basic MapStr.t) : unit =
 	Buffer.add_char buf '{';
+	let first = ref 1 in
 	MapStr.iter (fun id v ->
+		if !first = 0 then Buffer.add_char buf ',';
 		Buffer.add_char buf '"';
 		Buffer.add_string buf id;
 		Buffer.add_string buf "\":";
 		Buffer.add_string buf (json_of_value (Basic v));
-		Buffer.add_string buf ",";
+		first := 0
 	) ps;
-	if Buffer.length buf <= 1 then "{}"
-	else (Buffer.sub buf 0 ((Buffer.length buf) - 1)) ^ "}"
+	Buffer.add_char buf '}'
+;;
 
-let json_of_preconditions (pre: basic MapRef.t) : string =
-	let buf = Buffer.create 42 in
+let json_of_preconditions (buf: Buffer.t) (pre: basic MapRef.t) : unit =
+	Buffer.add_char buf '{';
+	let first = ref 1 in
 	MapRef.iter (fun r v ->
-		Buffer.add_string buf ",\"";
+		if !first = 0 then Buffer.add_char buf ',';
+		Buffer.add_char buf '"';
 		Buffer.add_string buf !^r;
 		Buffer.add_string buf "\":";
-		Buffer.add_string buf (json_of_value (Basic v))
+		Buffer.add_string buf (json_of_value (Basic v));
+		first := 0
 	) pre;
-	let s = Buffer.contents buf in
-	if s = "" then "{}" else "{" ^ (String.sub s 1 ((String.length s) -1)) ^ "}";;
+	Buffer.add_char buf '}'
+;;
 
 let json_of_effects = json_of_preconditions;;
 
-let json_of ((name, params, cost, pre, eff): t) : string =
-	sprintf "{\"name\":\"%s\",\"parameters\":%s,\"cost\":%d,\"conditions\":%s,\"effects\":%s}"
-		!^name (json_of_parameters params) cost (json_of_preconditions pre) (json_of_effects eff);;
+let json_of_elements (buf: Buffer.t) (a: t) =
+	Buffer.add_string buf "\"name\":\"";
+	Buffer.add_string buf !^(a.name);
+	Buffer.add_string buf "\",\"parameters\":";
+	json_of_parameters buf a.parameters;
+	Buffer.add_string buf ",\"cost\":";
+	Buffer.add_string buf (string_of_int a.cost);
+	Buffer.add_string buf ",\"conditions\":";
+	json_of_preconditions buf a.preconditions;
+	Buffer.add_string buf ",\"effects\":";
+	json_of_effects buf a.effects
+;;
+
+let json_of (a: t) : string =
+	let buf = Buffer.create 42 in
+	Buffer.add_char buf '{';
+	json_of_elements buf a;
+	Buffer.add_char buf '}';
+	Buffer.contents buf
+;;
+
+let json_of_parallel_action (a: t) (before: int list) (after: int list) : string =
+	let buf = Buffer.create 42 in
+	let to_json elements =
+		Buffer.add_char buf '[';
+		if elements <> [] then (
+			Buffer.add_string buf (string_of_int (List.hd elements));
+			List.iter (fun j ->
+				Buffer.add_char buf ',';
+				Buffer.add_string buf (string_of_int j)
+			) (List.tl elements)
+		);
+		Buffer.add_char buf ']'
+	in
+	Buffer.add_char buf '{';
+	json_of_elements buf a;
+	Buffer.add_string buf ",\"before\":";
+	to_json before;
+	Buffer.add_string buf ",\"after\":";
+	to_json after;
+	Buffer.add_char buf '}';
+	Buffer.contents buf
+;;
+
 
 let json_of_actions (actions: t list) : string =
 	match actions with
 	| [] -> "[]"
 	| act :: [] -> "[" ^ (json_of act) ^ "]"
 	| act :: acts -> "[" ^ (json_of act) ^ (List.fold_left (fun s a -> s ^ "," ^ (json_of a)) "" acts) ^ "]"
-
+;;
 
 (******************************************************************************
  * Functions to encode/decode actions' name. This will be used in FDR.
  ******************************************************************************)
 
-let encode_name (id: int) (name: reference) (ps: basic MapStr.t) : string =
-	(string_of_int id) ^ " \"" ^ !^name ^ "\" " ^ (json_of_parameters ps)
+let encode_name id a =
+	let buf = Buffer.create 42 in
+	Buffer.add_string buf (string_of_int id);
+	Buffer.add_string buf " \"";
+	Buffer.add_string buf !^(a.name);
+	Buffer.add_string buf "\" ";
+	json_of_parameters buf a.parameters;
+	Buffer.contents buf
+;;
 
 let decode_name (s: string): int * reference * basic MapStr.t =
 	let rec iter_param (map: basic MapStr.t) ps =
@@ -97,7 +167,7 @@ let decode_name (s: string): int * reference * basic MapStr.t =
 			(id, name, params)
 		)
 	| _ -> error 804
-
+;;
 
 (******************************************************************************
  * Functions to ground actions.
@@ -122,11 +192,13 @@ let create_parameter_table params name (tvalues: Type.typevalue) =
 			else List.fold_left (fun acc3 table -> (MapStr.add id v table) :: acc3) acc2 acc1
 		) [] values
 	) table2 []
+;;
 
 let equals_to_map = fun map c ->
 	match c with
 	| Eq (r, v) -> MapRef.add r v map
 	| _         -> error 520
+;;
 
 (** for each clause of global constraints DNF, create a dummy action **)
 let create_global_actions (global: _constraint) (acc: ts) : ts =
@@ -142,17 +214,21 @@ let create_global_actions (global: _constraint) (acc: ts) : ts =
 			match c with
 			| And css   ->
 				let pre1 = List.fold_left equals_to_map pre css in
-				add (name, params, 0, pre1, eff) acc1
+				let a = { name = name; parameters = params; cost = 0; preconditions = pre1; effects = eff } in
+				add a acc1
 			| Eq (r, v) ->
 				let pre1 = MapRef.add r v pre in
-				add (name, params, 0, pre1, eff) acc1
+				let a = { name = name; parameters = params; cost = 0; preconditions = pre1; effects = eff } in
+				add a acc1
 			| _         -> error 523
 		) acc cs
 	| And cs ->
 		let name = ["!global"] in
 		let pre1 = List.fold_left equals_to_map pre cs in
-		add (name, params, 0, pre1, eff) acc
+		let a = { name = name; parameters = params; cost = 0; preconditions = pre1; effects = eff } in
+		add a acc
 	| _      -> error 524
+;;
 
 (**
  * Compile simple implication of global constraints by modifying precondition of actions.
@@ -214,7 +290,7 @@ let compile_simple_implication pre eff vars g_implies =
 		) else lpre1
 	in
 	compile [pre]
-	;;
+;;
 
 (**
  * Ground an SFP action.
@@ -247,25 +323,30 @@ let ground_action_of (name, params, cost, pre, eff) env vars typevalue dummy g_i
 					| _         -> error 521
 				in
 				List.fold_left (fun acc3 pre4 ->
-					add (name, ps, cost, pre4, eff2) acc3
+					let a = { name = name; parameters = ps; cost = cost; preconditions = pre4; effects = eff2 } in
+					add a acc3
 				) acc2 (compile_simple_implication pre3 eff2 vars g_implies)
 			) acc1 cs
 		| And css   ->
 			let pre3 = List.fold_left equals_to_map pre2 css in
 			List.fold_left (fun acc2 pre4 ->
-				add (name, ps, cost, pre4, eff2) acc2
+				let a = { name = name; parameters = ps; cost = cost; preconditions = pre4; effects = eff2 } in
+				add a acc2
 			) acc1 (compile_simple_implication pre3 eff2 vars g_implies)
 		| Eq (r, v) ->
 			let pre3 = MapRef.add r v pre2 in
 			List.fold_left (fun acc2 pre4 ->
-				add (name, ps, cost, pre4, eff2) acc2
+				let a = { name = name; parameters = ps; cost = cost; preconditions = pre4; effects = eff2 } in
+				add a acc2
 			) acc1 (compile_simple_implication pre3 eff2 vars g_implies)
 		| True      ->
 			List.fold_left (fun acc2 pre3 ->
-				add (name, ps, cost, pre3, eff2) acc2
+				let a = { name = name; parameters = ps; cost = cost; preconditions = pre3; effects = eff2 } in
+				add a acc2
 			) acc1 (compile_simple_implication pre2 eff2 vars g_implies)
 		| _         -> error 522
 	) acc param_tables
+;;
 
 (* ground a set of actions - returns a list of grounded actions *)
 let ground_actions (env: Type.env) (vars: Variable.ts) (tvalues: Type.typevalue) (global: _constraint)
@@ -277,3 +358,4 @@ let ground_actions (env: Type.env) (vars: Variable.ts) (tvalues: Type.typevalue)
 		| Action a -> ground_action_of a env vars tvalues add_dummy g_implies acc
 		| _        -> acc
 	) (Type.values_of (Syntax.TBasic Syntax.TAction) tvalues) actions
+;;

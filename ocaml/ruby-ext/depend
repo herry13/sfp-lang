@@ -1,0 +1,67 @@
+
+
+#############################################################################
+#                                                                           #
+#                               Objective Caml                              #
+#                                                                           #
+#############################################################################
+
+OCAMLC   = ocamlc.opt
+OCAMLOPT = ocamlopt.opt
+OCAMLDEP = ocamldep.opt
+OFLAGS   =  -pp 'camlp4o -I . pa_rocaml.cmo'
+OCAML_INCLUDES = 
+OCAML_LIBS     = nums.cmxa
+
+OCAML_TARGET = test_rocaml_runtime.o
+
+$(DLLIB): $(OCAML_TARGET)
+
+$(OCAML_TARGET): test.cmx rubyOCamlUtil.cmx test.o rubyOCamlUtil.o
+	ocamlopt.opt $(OCAML_INCLUDES) -output-obj -o $@ $(OCAML_LIBS) $^ 
+
+pa_rocaml.cmo: pa_rocaml.ml
+	ocamlc -c -I +camlp4 -pp "camlp4orf -loc _loc" pa_rocaml.ml
+
+rubyOCamlUtil.cmx: pa_rocaml.cmo
+test.cmx: pa_rocaml.cmo
+
+
+.SUFFIXES: .c .m .cc .cxx .cpp .C .o .mli .ml .cmi .cmo .cmx
+
+.mli.cmi:
+	$(OCAMLC) -c $(BFLAGS) $(OCAML_INCLUDES) $<
+
+.ml.cmo:
+	$(OCAMLC) -c $(BFLAGS) $(OCAML_INCLUDES) $<
+
+.ml.o:
+	$(OCAMLOPT) -c $(OFLAGS) $(OCAML_INCLUDES) $<
+
+.ml.cmx:
+	$(OCAMLOPT) -c $(OFLAGS) $(OCAML_INCLUDES) $<
+
+# clean
+
+.PHONY: clean_rocaml
+
+clean_rocaml:
+	@-$(RM) *.cmx *.cmi *.cmo
+
+clean: clean_rocaml
+
+.PHONY: distclean_rocaml
+
+distclean_rocaml:
+	@-$(RM) *_rocaml_wrapper.c depend .depend rubyOCamlUtil.ml pa_rocaml.ml
+
+distclean: distclean_rocaml
+
+# depend
+########
+
+.depend depend:
+	@-$(RM) .depend
+	$(OCAMLDEP) $(OCAML_INCLUDES) rubyOCamlUtil.ml test.ml > .depend
+
+include .depend

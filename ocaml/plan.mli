@@ -2,7 +2,7 @@ open Common
 
 type sequential = Action.t array
 
-type parallel = { actions: Action.t array; precedences: SetInt.t array }
+type parallel = { actions: Action.t array; before: SetInt.t array; after: SetInt.t array }
 
 val sequential_of : parallel -> sequential
 
