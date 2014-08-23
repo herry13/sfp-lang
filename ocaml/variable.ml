@@ -115,9 +115,14 @@ let string_of_variables vars =
 
 (* let make_ts map arr = { map = map; arr = arr } *)
 let make_ts (env_0: Type.env) (fs_0: flatstore) (env_g: Type.env) (fs_g: flatstore) (tvalues: Type.typevalue) : ts =
+	let t_object = Syntax.TBasic Syntax.TObject in
 	let type_of_var r =
 		match (Type.type_of r env_0), (Type.type_of r env_g) with
-		| t1, t2 when t1 = t2 -> t1
+		| t1, t2 when t1 = t2 -> (
+				(* only basic-value that can have TBD value at the goal state *)
+				if (Type.subtype t1 t_object) && (MapRef.find r fs_g) = TBD then error 506
+				else t1
+			)
 		| _, _                -> error 504  (* incompatible type between init & goal *)
 	in
 	let map0 = MapRef.add r_dummy dummy MapRef.empty in
