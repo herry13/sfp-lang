@@ -81,6 +81,7 @@ let rec (<:) (t1: _type) (t2: _type) : bool =                             (* Sub
 		| TBasic TNull, TRef _               -> true                      (* (Ref Null)       *)
 		| _, _                               -> false
 
+let subtype t1 t2 = t1 <: t2
 
 (*******************************************************************
  * well-formed environments and types functions
