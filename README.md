@@ -14,11 +14,12 @@ This is the implementation of the formal semantic of SFP language. Supporting fe
 - File inclusion
 - Keywords: `root`, `parent`, and `this`
 - Finite Domain Representation ([FDR](http://www.fast-downward.org/TranslatorOutputFormat)) generator for planning
+- `TBD` (to be defined) value: in planning, this has **any value** semantics (loose specification)
+- Partial-order plan generator
 
 
 Under development features:
-- Partial-order plan generator
-- _Loose_ specification: `any` value, `final` constraints, etc
+- _Loose_ specification: `final` constraints
 - Enumeration
 - Virtual resource
 - _Greater_ and _less than_ operator in constraints for integer/float domains

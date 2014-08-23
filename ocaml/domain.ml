@@ -18,6 +18,7 @@ and value     = Basic of basic
               | Global of _constraint
               | Link of reference
               | Action of action
+              | TBD
 and _value    = Val of value
               | Undefined
 and cell      = ident * value
@@ -37,10 +38,9 @@ and _constraint = Eq of reference * basic
                 | False
 
 (** action elements **)
-and action         = reference * parameter_type list * int * conditions * effect list
+and action         = reference * parameter_type list * int * _constraint * effect list
 and parameter_type = ident * Syntax._type
 and cost           = int
-and conditions     = _constraint
 and effect         = reference * basic
 
 (*******************************************************************
@@ -220,6 +220,15 @@ and accept s ns ss nss =
 		let sq = replace_link s ns c nss in
 		accept sq ns sp nss
 
+and tbd_exists s =
+	match s with
+	| []            -> false
+	| (id, v) :: ss ->
+		match v with
+		| TBD      -> true
+		| Store sp -> if tbd_exists sp then true else tbd_exists ss
+		| _        -> tbd_exists ss
+
 
 (*******************************************************************
  * convert reference (list of string) to string
@@ -251,6 +260,7 @@ and yaml_of_cell ids vs tab =
 		| Store child   -> "\n" ^ yaml_of_store1 child (tab ^ "  ")
 		| Global global -> yaml_of_constraint global (tab ^ "  ")
 		| Action action -> yaml_of_action action (tab ^ "  ")
+		| TBD           -> "TBD"
 	in
 	name ^ value
 
@@ -322,11 +332,12 @@ and json_of_cell id v = "\"" ^ id ^ "\":" ^ (json_of_value v)
 
 and json_of_value v =
 	match v with
-	| Link lr -> "\"link " ^ !^lr ^ "\""
-	| Basic basic -> json_of_basic basic
-	| Store child -> "{" ^ json_of_store1 child ^ "}"
+	| Link lr       -> "\"link " ^ !^lr ^ "\""
+	| Basic basic   -> json_of_basic basic
+	| Store child   -> "{" ^ json_of_store1 child ^ "}"
 	| Global global -> json_of_constraint global
 	| Action action -> json_of_action action
+	| TBD           -> "$.TBD"
 
 and json_of_basic v =
 	match v with

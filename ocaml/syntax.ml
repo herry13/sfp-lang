@@ -15,6 +15,7 @@ and  value         = BV  of basicValue
                    | LR  of linkReference
                    | P   of superSchema * prototype
                    | Ac  of action
+                   | TBD
 and  prototype     = R_P of reference * prototype
                    | B_P of block * prototype
                    | EmptyPrototype
@@ -41,6 +42,7 @@ and _type     = TBasic   of basicType
               | TRef     of basicType
               | TForward of reference * bool  (* r [link: true, data: false] *)
               | TUndefined
+              | TTBD
 and basicType = TBool                         (* (Type Bool)   *)
               | TInt                          (* (Type Int)    *)
               | TFloat                        (* (Type Float)  *)
@@ -94,6 +96,7 @@ and string_of_value v =
 	| LR lr      -> " " ^ (string_of_ref lr) ^ ";"
 	| P (sid, p) -> (string_of_super_schema sid) ^ (string_of_proto p)
 	| Ac a       -> string_of_action a
+	| TBD        -> " TBD"
 
 and string_of_proto p =
 	match p with
@@ -128,6 +131,7 @@ and string_of_type t =
 	| TRef bt              -> "*" ^ (string_of_basic_type bt)
 	| TForward (r, islink) -> "?(" ^ (if islink then "" else "*") ^ (String.concat "." r) ^ ")"
 	| TUndefined           -> "!"
+	| TTBD                 -> "?TBD"
 
 and string_of_basic_type t =
 	match t with

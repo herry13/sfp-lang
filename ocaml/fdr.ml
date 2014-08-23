@@ -60,9 +60,10 @@ let of_goal (buf: Buffer.t) (vars: Variable.ts) use_dummy : unit =
 		 * - it has more than one value
 		 * - if it is a dummy variable, then the global constraint must be exist
 		 *)
-		let i = Variable.index_of_value (Variable.goal var) var in
+		let goal = Variable.goal var in
+		let i = Variable.index_of_value goal var in
 		if i < 0 then error 602; (* goal state is not satisfying the global constraint *)
-		if (Variable.size var) > 1 && ((Variable.index var) > 0 || use_dummy) then
+		if (Variable.size var) > 1 && ((Variable.index var) > 0 || use_dummy) && goal <> TBD then
 		(
 			Buffer.add_char tmp '\n';
 			Buffer.add_string tmp (string_of_int (Variable.index var));
@@ -180,9 +181,11 @@ let of_axioms (buf: Buffer.t) : unit =
 let of_sfp (ast_0: Syntax.sfp) (ast_g: Syntax.sfp) : t =
 	(* step 0: parse the specification and generate a store *)
 	let env_0 = Type.sfpSpecification ast_0 in
+	(* perform all-passes *)
 	let store_0 = Valuation.sfpSpecification ast_0 in
 	let env_g = Type.sfpSpecification ast_g in
-	let store_g = Valuation.sfpSpecification ast_g in
+	(* perform first & second passes: allow TBD value *)
+	let store_g = Valuation.sfpSpecificationSecondPass ast_g in
 	(* step 1: generate flat-stores of current and desired specifications *)
 	let fs_0 = normalise store_0 in
 	let fs_g = normalise store_g in

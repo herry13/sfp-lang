@@ -18,6 +18,8 @@ val sfpSpecification : Syntax.sfp -> env
 
 val type_of : Domain.reference -> env -> Syntax._type
 
+val subtype : Syntax._type -> Syntax._type -> bool
+
 
 (*******************************************************************
  * a map from type to set of values

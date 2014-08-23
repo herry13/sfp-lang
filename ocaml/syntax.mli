@@ -15,6 +15,7 @@ and  value         = BV  of basicValue
                    | LR  of reference
                    | P   of superSchema * prototype
                    | Ac  of action
+                   | TBD
 and  prototype     = R_P of reference * prototype
                    | B_P of block * prototype
                    | EmptyPrototype
@@ -39,6 +40,7 @@ and _type     = TBasic   of basicType
               | TRef     of basicType
               | TForward of reference * bool  (* r [link: true, data: false] *)
               | TUndefined
+              | TTBD
 and basicType = TBool                         (* (Type Bool)   *)
               | TInt                          (* (Type Int)    *)
               | TFloat                        (* (Type Float)  *)

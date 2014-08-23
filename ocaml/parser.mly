@@ -16,12 +16,13 @@ open Syntax
 %token <string> INT
 %token <string> FLOAT
 %token <string> STRING
+%token NULL TOK_TBD
 %token <string> ID
 %token <string> INCLUDE
 %token <string> SFP_INCLUDE_FILE
 %token <Syntax.block -> Syntax.block> SF_INCLUDE
 %token <Syntax.sfpcontext -> Syntax.sfpcontext> SFP_INCLUDE
-%token EXTENDS COMMA DATA BEGIN END SEP NULL
+%token EXTENDS COMMA DATA BEGIN END SEP
 %token LBRACKET RBRACKET EOS EOF
 %token ISA SCHEMA ASTERIX COLON TBOOL TINT TFLOAT TSTR TOBJ
 %token GLOBAL EQUAL NOT_EQUAL IF THEN IN NOT LPARENTHESIS RPARENTHESIS
@@ -62,10 +63,14 @@ assignment
 	| reference type_def value { ($1, $2, $3) }
 
 value
-	: EQUAL basic EOS    { BV $2 }
-	| link_reference EOS { LR $1 }
-	| ISA ID protos      { P (SID $2, $3) }
-	| protos             { P (EmptySchema, $1) }
+	: EQUAL equal_value EOS  { $2 }
+	| link_reference EOS     { LR $1 }
+	| ISA ID protos          { P (SID $2, $3) }
+	| protos                 { P (EmptySchema, $1) }
+
+equal_value
+	: basic    { BV $1 }
+	| TOK_TBD  { TBD }
 
 protos
 	: EXTENDS prototypes { $2 }
