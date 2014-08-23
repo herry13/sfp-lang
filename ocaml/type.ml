@@ -1,6 +1,10 @@
 open Common
 open Syntax
 
+(**
+ * TODOC : to be documented
+ *)
+
 (*******************************************************************
  * type environment
  *******************************************************************)
@@ -68,13 +72,14 @@ let rec (<:) (t1: _type) (t2: _type) : bool =                             (* Sub
 	if t1 = t2 then true                                              (* (Reflex)         *)
 	else
 		match t1, t2 with
-		| TBasic TInt, TBasic TFloat         -> true                      (* TODO (IntFloat) *)
+		| TTBD, _ when t2 <> TUndefined      -> true                      (* TODOC (TBD Subtype) *)
+		| TBasic TInt, TBasic TFloat         -> true                      (* TODOC (IntFloat)  *)
 		| TBasic (TSchema _), TBasic TObject -> true                      (* (Object Subtype) *)
 		| TBasic (TSchema (sid1, super1)), _ -> TBasic super1 <: t2       (* (Trans)          *)
 		| TVec tv1, TVec tv2                 -> tv1 <: tv2                (* (Vec Subtype)    *)
 		| TRef tr1, TRef tr2                 -> TBasic tr1 <: TBasic tr2  (* (Ref Subtype)    *)
 		| TBasic TNull, TRef _               -> true                      (* (Ref Null)       *)
-		| _, _ -> false
+		| _, _                               -> false
 
 
 (*******************************************************************
@@ -85,7 +90,8 @@ let rec (<:) (t1: _type) (t2: _type) : bool =                             (* Sub
 let rec has_type (e: lenv) (t: _type) : bool =
 	match t with
 	| TUndefined                -> false
-	| TForward (_, _)           -> true                    (* TODO (Type Forward) *)
+	| TTBD                      -> true                    (* TODOC (Type TBD) *)
+	| TForward (_, _)           -> true                    (* TODOC (Type Forward) *)
 	| TVec tv                   -> has_type e tv           (* (Type Vec)    *)
 	| TRef tr                   -> has_type e (TBasic tr)  (* (Type Ref)    *)
 	| TBasic TBool              -> true                    (* (Type Bool)   *)
@@ -145,19 +151,20 @@ let bind (e: lenv) (r: reference) (t: _type) : lenv =
  *)
 let assign (e: lenv) (r: reference) (t: _type) (t_value: _type) : lenv =
 	match (find e r), t, t_value with
+	| Undefined, TUndefined, TTBD                          -> error 71 (!^r ^ " cannot assign TBD to an undefined variable")
 	| Undefined, TUndefined, _                             -> bind e r t_value                          (* (Assign1) *)
 	| Undefined, t, _ when t_value <: t                    -> bind e r t                                (* (Assign3) *)
-	| Undefined, t, TForward (r, islink)                   -> (r, t) :: (r, TForward (r, islink)) :: e  (* TODO (Assign5) *)
+	| Undefined, t, TForward (r, islink)                   -> (r, t) :: (r, TForward (r, islink)) :: e  (* TODOC (Assign5) *)
 	| Undefined, _, _                                      -> error 7 (!^r ^ " not satisfy rule (Assign3)")
 	| Type (TForward (r, islink)), _, _                    -> (r, t) :: (r, t_value) :: e
 	| Type t_var, TUndefined, _ when t_value <: t_var      -> e                                         (* (Assign2) *)
-	| Type t_var, TUndefined, TForward (r, islink)         -> (r, TForward (r, islink)) :: e            (* TODO (Assign6) *)
+	| Type t_var, TUndefined, TForward (r, islink)         -> (r, TForward (r, islink)) :: e            (* TODOC (Assign6) *)
 	| Type t_var, TUndefined, _                            -> error 8 (!^r ^ " not satisfy rule (Assign2)")
 	| Type t_var, _, _ when (t_value <: t) && (t <: t_var) -> e                                         (* (Assign4) *)
 	| Type t_var, _, _                                     -> error 9 (!^r ^ " not satisfy rule (Assign2) & (Assign4)")
 
 (**
- * TODO
+ * TODOC
  * return part of environment 'env' where 'ref' is the prefix of the variables
  * the prefix of variables will be removed when 'cut' is true, otherwise
  * the variables will have original references
@@ -176,7 +183,7 @@ let rec env_of_ref (env: lenv) (ref: reference) (cut: bool) : lenv =
 		) [] env
 
 (**
- * TODO
+ * TODOC
  * @param e  type environment
  * @param ns namespace where the reference will be resolved
  * @param r  reference to be resolved
@@ -194,7 +201,7 @@ let rec resolve (e: lenv) (ns: reference) (r: reference) : (reference * _t) =
 		| t         -> (ns, t)
 
 (**
- * TODO
+ * TODOC
  * @param e     type environment
  * @param proto prototype reference whose attributes to be copied
  * @param dest  reference of destination
@@ -204,7 +211,7 @@ let copy (e: lenv) (proto: reference) (dest: reference) : lenv =
 	List.fold_left (fun ep (rep, tep) -> (dest @++ rep, tep) :: ep) e e_proto
 
 (**
- * TODO
+ * TODOC
  * @param e     type environment
  * @param ns    namespace where references will be resolved
  * @param proto reference of prototype
@@ -224,7 +231,7 @@ let inherit_env (e: lenv) (ns: reference) (proto: reference) (r: reference) : le
  * second-pass type environment
  *******************************************************************)
 
-(* TODO resolve forward type assignment for lazy & data reference *)
+(* TODOC resolve forward type assignment for lazy & data reference *)
 let rec resolve_tforward (e: lenv) (ns: reference) (r: reference) (acc: SetRef.t) : (reference * _type) =
 	let follow_tforward nsp tr =
 		let rp = nsp @++ r in
@@ -238,7 +245,7 @@ let rec resolve_tforward (e: lenv) (ns: reference) (r: reference) (acc: SetRef.t
 		| nsp, Type TForward (tr, islink) -> follow_tforward nsp tr
 		| nsp, Type t                     -> (nsp @++ r, t)
 
-(* TODO replace all TForward elements in environment 'e' *)
+(* TODOC replace all TForward elements in environment 'e' *)
 let replace_tforward_in_env (e: lenv) : lenv =
 	let main = ["main"] in
 	let replace_tforward e1 r t tr islink =
@@ -314,6 +321,7 @@ let sfDataReference dr : lenv -> reference -> _type =  (* (Deref Data) *)
 		| _, Type (TRef t)   -> TRef t
 		| _, Type (TVec _)   -> error 101 ("dereference of " ^ !^r ^ " is a vector")
 		| _, Type TUndefined -> error 102 ("dereference of " ^ !^r ^ " is TUndefined")
+		| _, Type TTBD       -> (* TForward (r, false) *) error 103 ("dereference of " ^ !^r ^ " is TTBD")
 		| _, Undefined       -> TForward (r, false)
 
 let sfLinkReference lr : lenv -> reference -> reference -> (reference * _type) =  (* (Deref Link) *)
@@ -398,12 +406,13 @@ let rec sfPrototype proto first t_val : reference -> reference -> lenv -> lenv =
 and sfValue v : reference -> reference -> _type -> lenv -> lenv =
 	(**
 	 * @param ns namespace
-     * @param r  variable's reference
+	 * @param r  variable's reference
 	 * @param t  predefined type
 	 * @param e  type environment
 	 *)
 	fun ns r t e ->
 		match v with
+		| TBD     -> assign e r t TTBD
 		| BV bv   -> assign e r t (sfBasicValue bv e ns)
 		| LR link ->
 			(
@@ -519,7 +528,7 @@ let make_typevalue (env_0: env) (fs_0: Domain.flatstore) (env_g: env) (fs_g: Dom
 					| Domain.Int     _ -> add_value (TBasic TInt) (Domain.Basic v) acc
 					| Domain.Float   _ -> add_value (TBasic TFloat) (Domain.Basic v) acc
 					| Domain.String  _ -> add_value (TBasic TStr) (Domain.Basic v) acc
-					| Domain.Vector  _ -> error 501 "adding vector value of effects" (* TODO *)
+					| Domain.Vector  _ -> error 501 "TODO: adding vector value of effects" (* TODO *)
 					| _         -> acc
 			)
 		in

@@ -54,6 +54,7 @@ and sfValue v =
 			let s2 = Domain.inherit_proto s1 [] [sid] r in
 			sfPrototype p ns r s2
 		| Ac a               -> sfpAction a ns r s
+		| TBD                -> Domain.bind s r Domain.TBD
 
 (** 't' (type) is ignored since this function only evaluates the value **)
 and sfAssignment (r, t, v) =
@@ -94,18 +95,21 @@ and sfpSpecification sfp =
 		| Domain.Val (Domain.Store s) -> Domain.accept s1 r s r
 		| _ -> Domain.error 11
 	in
-	let v2 = Domain.find s2 r in
-	let rg = ["global"] in
-	let add_global s =
-		match Domain.find s1 rg with
-		| Domain.Undefined -> s
-		| Domain.Val (Domain.Global vg) -> Domain.bind s rg (Domain.Global vg)
-		| _ -> Domain.error 12
-	in
-	match v2 with
-	| Domain.Val (Domain.Store s) -> add_global s
-	| _ -> Domain.error 11
-
+	if Domain.tbd_exists s2 then Domain.error 12
+	else (
+		let v2 = Domain.find s2 r in
+		let rg = ["global"] in
+		let add_global s =
+			match Domain.find s1 rg with
+			| Domain.Undefined -> s
+			| Domain.Val (Domain.Global vg) -> Domain.bind s rg (Domain.Global vg)
+			| _ -> Domain.error 12
+		in
+		match v2 with
+		| Domain.Val (Domain.Store s) -> add_global s
+		| _ -> Domain.error 11
+	)
+	
 
 (** global constraints **)
 and sfpGlobal g =

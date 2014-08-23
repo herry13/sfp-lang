@@ -17,6 +17,7 @@ and value     = Basic of basic
               | Global of _constraint
               | Link of reference
               | Action of action
+              | TBD
 and _value    = Val of value
               | Undefined
 and cell      = ident * value
@@ -36,10 +37,9 @@ and _constraint = Eq of reference * basic
                 | False
 
 (** action elements : name * parameters * cost * preconditions * effects **)
-and action         = reference * parameter_type list * cost * conditions * effect list
+and action         = reference * parameter_type list * cost * _constraint * effect list
 and parameter_type = ident * Syntax._type
 and cost           = int
-and conditions     = _constraint
 and effect         = reference * basic
 
 (*******************************************************************
@@ -88,6 +88,7 @@ val inherit_proto : store -> reference -> reference -> reference -> store
 
 val accept : store -> reference -> store -> reference -> store
 
+val tbd_exists : store -> bool
 
 (*******************************************************************
  * domain convertion functions to string, JSON, or YAML

@@ -21,7 +21,7 @@
 			}
 
 	(* reserved words *)
-	let keywords = ["true"; "false"; "null"; "NULL"; "extends"; "DATA";
+	let keywords = ["true"; "false"; "null"; "NULL"; "extends"; "DATA"; "TBD";
 	                "isa"; "schema"; "bool"; "int"; "float";
 	                "str"; "string"; "obj"; "object"; "include"; "import";
 	                "in"; "if"; "then"; "global"; "not";
@@ -56,6 +56,7 @@ let sfp_include_file = "include" | "import"
 let true_value       = "true"
 let false_value      = "false"
 let null_value       = "null" | "NULL"
+let tbd_value        = "TBD"
 let extends          = "extends"
 let data_ref         = "DATA"
 let isa              = "isa"
@@ -104,6 +105,7 @@ rule token =
 	| true_value  { BOOL "true" }
 	| false_value { BOOL "false" }
 	| null_value  { NULL }
+	| tbd_value   { TOK_TBD }
 	| extends     { EXTENDS }
 	| data_ref    { DATA }
 	| isa         { ISA }
