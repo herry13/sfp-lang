@@ -28,7 +28,7 @@ This implementation is an SFP compiler based on its formal semantics. The curren
 - `TBD` (to be defined) value: in planning, this has **any value** semantics (loose specification)
 - Partial-order plan generator
 
-The language is being developed to support other features. Click [here](https://github.com/herry13/sfp-lang/issues?q=is%3Aopen+is%3Aissue+label%3A%22new+feature%22) for under development features.
+The language is being developed to support other features. Click [here](https://github.com/herry13/sfp-lang/issues?q=is%3Aopen+is%3Aissue+label%3A%22new+feature%22) for more details.
 
 
 To build
