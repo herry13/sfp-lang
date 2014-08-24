@@ -18,12 +18,7 @@ This is the implementation of the formal semantic of SFP language. Supporting fe
 - Partial-order plan generator
 
 
-Under development features:
-- _Loose_ specification: `final` constraints
-- Enumeration
-- Virtual resource
-- _Greater_ and _less than_ operator in constraints for integer/float domains
-- String concatenation
+Click [here](https://github.com/herry13/sfp-lang/issues?q=is%3Aopen+is%3Aissue+label%3A%22new+feature%22) for under development features.
 
 
 To build
