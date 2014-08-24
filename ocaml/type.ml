@@ -232,7 +232,7 @@ let inherit_env (e: lenv) (ns: reference) (proto: reference) (r: reference) : le
  * second-pass type environment
  *******************************************************************)
 
-(* TODOC resolve forward type assignment for lazy & data reference *)
+(* TODOC resolve forward type assignment for link & data reference *)
 let rec resolve_tforward (e: lenv) (ns: reference) (r: reference) (acc: SetRef.t) : (reference * _type) =
 	let follow_tforward nsp tr =
 		let rp = nsp @++ r in
@@ -252,8 +252,10 @@ let replace_tforward_in_env (e: lenv) : lenv =
 	let replace_tforward e1 r t tr islink =
 		let (proto, t_val) =
 			match resolve_tforward e1 r tr SetRef.empty with
-			| proto, TBasic t -> (proto, (if islink then TBasic t else TRef t))
-			| proto, t        -> (proto, t)
+			| proto, TBasic t               -> (proto, (if islink then TBasic t else TRef t))
+			| proto, TRef _ when not islink -> error 121 (!^r ^ " has a value of reference of reference, which is not allowed")
+			| proto, TVec _ when not islink -> error 122 (!^r ^ " has a value of reference of vector, which is not allowed")
+			| proto, t                      -> (proto, t)
 		in
 		let e2 = (r, t_val) :: e1 in
 		if t_val <: TBasic TObject then copy e2 proto r
@@ -319,7 +321,7 @@ let sfDataReference dr : lenv -> reference -> _type =  (* (Deref Data) *)
 		match resolve e ns r with
 		| _, Type (TForward (rz, islink)) -> TForward (rz, islink)
 		| _, Type (TBasic t) -> TRef t
-		| _, Type (TRef t)   -> TRef t
+		| _, Type (TRef _)   -> error 103 ("reference of reference is not allowed") (* TRef t *)
 		| _, Type (TVec _)   -> error 101 ("dereference of " ^ !^r ^ " is a vector")
 		| _, Type TUndefined -> error 102 ("dereference of " ^ !^r ^ " is TUndefined")
 		| _, Type TTBD       -> (* TForward (r, false) *) error 103 ("dereference of " ^ !^r ^ " is TTBD")
