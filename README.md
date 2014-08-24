@@ -3,7 +3,18 @@ SFP Language Compiler
 
 [![Build Status](https://travis-ci.org/herry13/sfp-lang.svg?branch=master)](https://travis-ci.org/herry13/sfp-lang)
 
-This is the implementation of the formal semantic of SFP language. Supporting features are:
+SFP language serves two objectives:
+
+1. To define a declarative specification of configuration state of a system.
+2. To model a reconfiguration task which consists of:
+	- a current state (init)
+	- a desired state (goal)
+	- a set of actions, each of which has parameters, cost, preconditions (condition before applying the action), and effects (condition after applying the action)
+	- a set of global constraints (condition that must be satisfied at intermediate and final states)
+
+SFP was developed based on [SmartFrog](http://smartfrog.org) language and [PDDL](http://en.wikipedia.org/wiki/Planning_Domain_Definition_Language). The syntax resembles SmartFrog language with new notations for describing actions and global constraints (using PDDL-style).
+
+This implementation is an SFP compiler based on its formal semantics. The current version supports the following features:
 - Static type system
 - Static schema
 - Basic values: boolean, number, string, null, and vector
@@ -17,8 +28,7 @@ This is the implementation of the formal semantic of SFP language. Supporting fe
 - `TBD` (to be defined) value: in planning, this has **any value** semantics (loose specification)
 - Partial-order plan generator
 
-
-Click [here](https://github.com/herry13/sfp-lang/issues?q=is%3Aopen+is%3Aissue+label%3A%22new+feature%22) for under development features.
+The language is being developed to support other features. Click [here](https://github.com/herry13/sfp-lang/issues?q=is%3Aopen+is%3Aissue+label%3A%22new+feature%22) for under development features.
 
 
 To build
