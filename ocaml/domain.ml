@@ -29,6 +29,10 @@ and ident     = string
 (** constraint elements **)
 and _constraint = Eq of reference * basic
                 | Ne of reference * basic
+				| Greater of reference * basic
+				| GreaterEqual of reference * basic
+				| Less of reference * basic
+				| LessEqual of reference * basic
                 | Not of _constraint
                 | Imply of _constraint * _constraint
                 | And of _constraint list
@@ -361,36 +365,20 @@ and json_of_vec vec =
  *******************************************************************)
 and json_of_constraint c =
 	match c with
-	| Eq (r, v)      -> json_of_equal r v
-	| Ne (r, v)      -> json_of_not_equal r v
-	| Not _          -> json_of_negation c
-	| Imply (c1, c2) -> json_of_implication c1 c2
-	| And cs         -> json_of_conjunction cs
-	| Or cs          -> json_of_disjunction cs
-	| In (r, vec)    -> json_of_membership r vec
-	| True           -> "true"
-	| False          -> "false"
-
-and json_of_conjunction cs =
-	(List.fold_left (fun s c -> s ^ "," ^ (json_of_constraint c)) "[\"and\"" cs) ^ "]"
-
-and json_of_disjunction cs =
-	(List.fold_left (fun s c -> s ^ "," ^ (json_of_constraint c)) "[\"or\"" cs) ^ "]"
-
-and json_of_equal r bv =
-	"[\"=\",\"" ^ !^r ^ "\"," ^ (json_of_basic bv) ^ "]"
-
-and json_of_not_equal r bv =
-	"[\"!=\",\"" ^ !^r ^ "\"," ^ (json_of_basic bv) ^ "]"
-
-and json_of_negation c =
-	"[\"not\"," ^ (json_of_constraint c) ^ "]"
-
-and json_of_implication c1 c2 =
-	"[\"imply\"," ^ (json_of_constraint c1) ^ "," ^ (json_of_constraint c2) ^ "]"
-
-and json_of_membership r v =
-	"[\"in\",\"" ^ !^r ^ "\",[" ^ (json_of_vec v) ^ "]]"
+	| Eq (r, bv)      -> "[\"=\",\"" ^ !^r ^ "\"," ^ (json_of_basic bv) ^ "]"
+	| Ne (r, bv)      -> "[\"!=\",\"" ^ !^r ^ "\"," ^ (json_of_basic bv) ^ "]"
+	| Greater (r, bv) -> "[\">\",\"" ^ !^r ^ "\"," ^ (json_of_basic bv) ^ "]"
+	| GreaterEqual (r, bv) -> "[\">=\",\"" ^ !^r ^ "\"," ^ (json_of_basic bv) ^ "]"
+	| Less (r, bv)    -> "[\"<\",\"" ^ !^r ^ "\"," ^ (json_of_basic bv) ^ "]"
+	| LessEqual (r, bv)    -> "[\"<=\",\"" ^ !^r ^ "\"," ^ (json_of_basic bv) ^ "]"
+	| Not _           -> "[\"not\"," ^ (json_of_constraint c) ^ "]"
+	| Imply (c1, c2)  -> "[\"imply\"," ^ (json_of_constraint c1) ^ "," ^ (json_of_constraint c2) ^ "]"
+	| And cs          -> (List.fold_left (fun s c -> s ^ "," ^ (json_of_constraint c)) "[\"and\"" cs) ^ "]"
+	| Or cs           -> (List.fold_left (fun s c -> s ^ "," ^ (json_of_constraint c)) "[\"or\"" cs) ^ "]"
+	| In (r, vec)     -> "[\"in\",\"" ^ !^r ^ "\",[" ^ (json_of_vec vec) ^ "]]"
+	| True            -> "true"
+	| False           -> "false"
+	
 
 (*******************************************************************
  * convert a constraint to YAML

@@ -17,16 +17,19 @@ open Syntax
 %token <string> FLOAT
 %token <string> STRING
 %token NULL TOK_TBD
-%token <string> ID
 %token <string> INCLUDE
 %token <string> SFP_INCLUDE_FILE
-%token <Syntax.block -> Syntax.block> SF_INCLUDE
-%token <Syntax.sfpcontext -> Syntax.sfpcontext> SFP_INCLUDE
+%token <string> ID
 %token EXTENDS COMMA DATA BEGIN END SEP
 %token LBRACKET RBRACKET EOS EOF
 %token ISA SCHEMA ASTERIX COLON TBOOL TINT TFLOAT TSTR TOBJ
 %token GLOBAL EQUAL NOT_EQUAL IF THEN IN NOT LPARENTHESIS RPARENTHESIS
+%token TOK_GREATER TOK_GREATER_EQUAL TOK_LESS TOK_LESS_EQUAL
 %token COST CONDITIONS EFFECTS ACTION
+
+/* entry point to included file */
+%token <Syntax.block -> Syntax.block> SF_INCLUDE
+%token <Syntax.sfpcontext -> Syntax.sfpcontext> SFP_INCLUDE
 
 /* entry point for main-file is 'sfp', for included file is 'incontext_included' or 'inblock_included' */
 %start inblock_included sfp incontext_included
@@ -153,12 +156,28 @@ sfp_constraint
 	| negation                              { $1 }
 	| implication                           { $1 }
 	| membership                            { $1 }
+	| greater_than                          { $1 }
+	| less_than                             { $1 }
+	| greater_equal                         { $1 }
+	| less_equal                            { $1 }
 
 equal
 	: reference EQUAL basic EOS { Eq ($1, $3) }
 
 not_equal
 	: reference NOT_EQUAL basic EOS { Ne ($1, $3) }
+
+greater_than
+	: reference TOK_GREATER basic EOS { Greater ($1, $3) }
+
+greater_equal
+	: reference TOK_GREATER_EQUAL basic EOS { GreaterEqual ($1, $3) }
+
+less_than
+	: reference TOK_LESS basic EOS { Less ($1, $3) }
+
+less_equal
+	: reference TOK_LESS_EQUAL basic EOS { LessEqual ($1, $3) }
 
 implication
 	: IF sfp_constraint THEN sfp_constraint { Imply ($2, $4) }

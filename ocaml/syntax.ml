@@ -58,6 +58,10 @@ and basicType = TBool                         (* (Type Bool)   *)
 and global      = _constraint
 and _constraint = Eq of reference * basicValue
                 | Ne of reference * basicValue
+				| Greater of reference * basicValue
+				| GreaterEqual of reference * basicValue
+				| Less of reference * basicValue
+				| LessEqual of reference * basicValue
                 | Not of _constraint
                 | Imply of _constraint * _constraint
                 | And of _constraint list
@@ -167,36 +171,19 @@ and string_of_sfp sfp = string_of_sfpcontext sfp
 and string_of_global g =
 	"global " ^ (string_of_constraint g) ^ "\n"
 
-and string_of_conjunction cs =
-	(List.fold_left (fun s c -> s ^ " " ^ (string_of_constraint c)) "(and " cs) ^ ")"
-
-and string_of_disjunction cs =
-	(List.fold_left (fun s c -> s ^ " " ^ (string_of_constraint c)) "(or " cs) ^ ")"
-
 and string_of_constraint c =
 	match c with
-	| Eq (r, v)      -> string_of_equal r v
-	| Ne (r, v)      -> string_of_not_equal r v
-	| Not _          -> string_of_negation c
-	| Imply (c1, c2) -> string_of_implication c1 c2
-	| And cs         -> string_of_conjunction cs
-	| Or cs          -> string_of_conjunction cs
-	| In (r, vec)    -> string_of_membership r vec
-
-and string_of_equal r bv =
-	"(= " ^ !^r ^ " " ^ (string_of_basic_value bv) ^ ")"
-
-and string_of_not_equal r bv =
-	"(!= " ^ !^r ^ " " ^ (string_of_basic_value bv) ^ ")"
-
-and string_of_negation c =
-	"(not " ^ (string_of_constraint c) ^ ")"
-
-and string_of_implication c1 c2 =
-	"(imply " ^ (string_of_constraint c1) ^ " " ^ (string_of_constraint c2) ^ ")"
-
-and string_of_membership r v =
-	"(in " ^ !^r ^ " " ^ (string_of_vector v) ^ ")"
+	| Eq (r, bv)      -> "(= " ^ !^r ^ " " ^ (string_of_basic_value bv) ^ ")"
+	| Ne (r, bv)      -> "(!= " ^ !^r ^ " " ^ (string_of_basic_value bv) ^ ")"
+	| Not _           -> "(not " ^ (string_of_constraint c) ^ ")"
+	| Imply (c1, c2)  -> "(imply " ^ (string_of_constraint c1) ^ " " ^ (string_of_constraint c2) ^ ")"
+	| And cs          -> (List.fold_left (fun s c -> s ^ " " ^ (string_of_constraint c)) "(and " cs) ^ ")"
+	| Or cs           -> (List.fold_left (fun s c -> s ^ " " ^ (string_of_constraint c)) "(or " cs) ^ ")"
+	| In (r, vec)     -> "(in " ^ !^r ^ " " ^ (string_of_vector vec) ^ ")"
+	| Greater (r, bv) -> "(> " ^ !^r ^ " " ^ (string_of_basic_value bv) ^ ")"
+	| GreaterEqual (r, bv) -> "(>= " ^ !^r ^ " " ^ (string_of_basic_value bv) ^ ")"
+	| Less (r, bv)    -> "(< " ^ !^r ^ " " ^ (string_of_basic_value bv) ^ ")"
+	| LessEqual (r, bv) -> "(<= " ^ !^r ^ " " ^ (string_of_basic_value bv) ^ ")"
 
 (** action **)
 and string_of_effect (r, bv) =

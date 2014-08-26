@@ -53,6 +53,10 @@ let rec compile_nested r v vars env mode =
 			| 2, _          -> (Ne (r, v)) :: cs
 			| 3, Vector vec -> (In (r, vec)) :: cs
 			| 4, Vector vec -> (Not (In (r, vec))) :: cs
+			| 5, _          -> (Greater (r, v)) :: cs
+			| 6, _          -> (GreaterEqual (r, v)) :: cs
+			| 7, _          -> (Less (r, v)) :: cs
+			| 8, _          -> (LessEqual (r, v)) :: cs
 			| _             -> error 508
 		else
 			let cs1 = (Ne (prevail, Null)) :: cs in
@@ -148,7 +152,37 @@ and dnf_of c (vars: Variable.ts) env =
 	| In (r, vec)    -> dnf_of_membership r vec vars env
 	| And cs         -> dnf_of_conjunction cs vars env
 	| Or cs          -> dnf_of_disjunction cs vars env
-	| _              -> c
+	| Greater (r, v) -> dnf_of_numeric r v vars env (fun x1 x2 -> x1 > x2)
+	| GreaterEqual (r, v) -> dnf_of_numeric r v vars env (fun x1 x2 -> x1 >= x2)
+	| Less (r, v) -> dnf_of_numeric r v vars env (fun x1 x2 -> x1 < x2)
+	| LessEqual (r, v) -> dnf_of_numeric r v vars env (fun x1 x2 -> x1 <= x2)
+	| _              -> error 550
+
+and dnf_of_numeric r v vars env comparator =
+	let convert x =
+		let values =
+			Array.fold_left (
+				fun acc v1 -> (
+					match v1 with
+					| Basic (Int i)   -> if comparator (float_of_int i) x then (Int i) :: acc else acc
+					| Basic (Float f) -> if comparator f x then (Float f) :: acc else acc
+					| _               -> error 552
+				)
+			) [] (Variable.values_of r vars)
+		in
+		if values = [] then False
+		else dnf_of (In (r, values)) vars env
+	in
+	if Variable.mem r vars then (
+		match v with
+		| Int i   -> convert (float_of_int i)
+		| Float f -> convert f
+		| Ref r1   -> (
+				if Variable.mem r1 vars then error 553 (* TODO: right-hand is a reference *)
+				else error 554 (* right-hand is nested reference *)
+			)			
+		| _       -> error 551
+	) else dnf_of (compile_nested r v vars env 5) vars env
 
 (** convert equality to DNF, and convert a left-nested reference to prevail ones **)
 and dnf_of_equal r v vars env =
@@ -163,7 +197,7 @@ and dnf_of_not_equal r v vars env =
 				fun acc v1 ->
 					match v1 with
 					| Basic v2 -> if v2 = v then acc else v2 :: acc
-					| _        -> error 514
+					| _        -> error 514 (* the right-hand side is not a basic value *)
 			) [] (Variable.values_of r vars)
 		in
 		if values = [] then False
@@ -179,6 +213,10 @@ and dnf_of_negation c vars env =
 	| False     -> True
 	| Eq (r, v) -> dnf_of (Ne (r, v)) vars env
 	| Ne (r, v) -> dnf_of (Eq (r, v)) vars env
+	| Greater (r, v) -> dnf_of (LessEqual (r, v)) vars env
+	| GreaterEqual (r, v) -> dnf_of (Less (r, v)) vars env
+	| Less (r, v) -> dnf_of (GreaterEqual (r, v)) vars env
+	| LessEqual (r, v) -> dnf_of (Greater (r, v)) vars env
 	| Not c1    -> dnf_of c1 vars env
 	| Imply (premise, conclusion) ->
 		dnf_of (And [premise; (Not conclusion)]) vars env                (* -(p -> q) = p ^ -q *)

@@ -129,35 +129,27 @@ and sfpGlobal g =
 		| _                  -> Domain.error 12
 
 (** constraints **)
-and sfpEqual r bv = Domain.Eq (sfReference r, sfBasicValue bv)
-
-and sfpNotEqual r bv = Domain.Ne (sfReference r, sfBasicValue bv)
-
-and sfpNegation c = Domain.Not (sfpConstraint c)
-
-and sfpImplication c1 c2 = Domain.Imply (sfpConstraint c1, sfpConstraint c2)
-
-and sfpMembership r vec =
-	let rec eval v =
-		match v with
-		| [] -> []
-		| head :: tail -> (sfBasicValue head) :: (eval tail)
-	in
-	Domain.In (sfReference r, eval vec)
-
-and sfpConjunction cs = Domain.And (List.fold_left (fun acc c -> (sfpConstraint c) :: acc) [] cs)
-
-and sfpDisjunction cs = Domain.Or (List.fold_left (fun acc c -> (sfpConstraint c) :: acc) [] cs)
-
 and sfpConstraint (c : _constraint) =
+	let sfpMembership r vec =
+		let rec eval v =
+			match v with
+			| [] -> []
+			| head :: tail -> (sfBasicValue head) :: (eval tail)
+		in
+		Domain.In (sfReference r, eval vec)
+	in
 	match c with
-	| Eq (r, v)      -> sfpEqual r v
-	| Ne (r, v)      -> sfpNotEqual r v
-	| Not _          -> sfpNegation c
-	| Imply (c1, c2) -> sfpImplication c1 c2
-	| In (r, vec)    -> sfpMembership r vec
-	| And cs         -> sfpConjunction cs
-	| Or cs          -> sfpDisjunction cs
+	| Eq (r, v)           -> Domain.Eq ((sfReference r), (sfBasicValue v))
+	| Ne (r, v)           -> Domain.Ne ((sfReference r), (sfBasicValue v))
+	| Greater (r, v)      -> Domain.Greater ((sfReference r), (sfBasicValue v))
+	| GreaterEqual (r, v) -> Domain.GreaterEqual ((sfReference r), (sfBasicValue v))
+	| Less (r, v)         -> Domain.Less ((sfReference r), (sfBasicValue v))
+	| LessEqual (r, v)    -> Domain.LessEqual ((sfReference r), (sfBasicValue v))
+	| Not c1              -> Domain.Not (sfpConstraint c1)
+	| Imply (c1, c2)      -> Domain.Imply (sfpConstraint c1, sfpConstraint c2)
+	| In (r, vec)         -> sfpMembership r vec
+	| And cs              -> Domain.And (List.fold_left (fun acc c -> (sfpConstraint c) :: acc) [] cs)
+	| Or cs               -> Domain.Or (List.fold_left (fun acc c -> (sfpConstraint c) :: acc) [] cs)
 
 (* action *)
 and sfpAction (params, _cost, conds, effs) =

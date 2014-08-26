@@ -28,6 +28,10 @@ and ident     = string
 (** constraint elements **)
 and _constraint = Eq of reference * basic
                 | Ne of reference * basic
+				| Greater of reference * basic
+				| GreaterEqual of reference * basic
+				| Less of reference * basic
+				| LessEqual of reference * basic
                 | Not of _constraint
                 | Imply of _constraint * _constraint
                 | And of _constraint list

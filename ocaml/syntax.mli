@@ -56,6 +56,10 @@ and basicType = TBool                         (* (Type Bool)   *)
 and global      = _constraint
 and _constraint = Eq of reference * basicValue
                 | Ne of reference * basicValue
+				| Greater of reference * basicValue
+				| GreaterEqual of reference * basicValue
+				| Less of reference * basicValue
+				| LessEqual of reference * basicValue
                 | Not of _constraint
                 | Imply of _constraint * _constraint
                 | And of _constraint list
