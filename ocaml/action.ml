@@ -378,7 +378,7 @@ let compile_simple_implication preconditions effects variables
  *
  * returns a list of grounded actions
  *)
-let ground_action_of (name, params, cost, pre, eff) variableType variables
+let ground_action_of (name, params, cost, pre, eff) typeEnvironment variables
 		typeValues addDummy globalImplications actions =
 	let parameters = ground_parameters params name typeValues in
 	List.fold_left (fun acc parameters ->
@@ -398,7 +398,7 @@ let ground_action_of (name, params, cost, pre, eff) variableType variables
 				then MapRef.add Variable.r_dummy (Boolean true) MapRef.empty
 			else MapRef.empty
 		in
-		match Constraint.dnf_of pre1 variables variableType with
+		match Constraint.dnf_of pre1 variables typeEnvironment with
 		| False -> acc
 		| Or cs -> List.fold_left (fun acc1 c ->
 				let pre3 =
