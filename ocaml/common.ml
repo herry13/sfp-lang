@@ -1,3 +1,5 @@
+(** common data structures used by other modules **)
+
 module MapStr = Map.Make(String)
 
 module MapRef = Map.Make ( struct
