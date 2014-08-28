@@ -392,7 +392,7 @@ let ground_action_of (name, params, cost, pre, eff) typeEnvironment variables
 			if addDummy then MapRef.add Variable.r_dummy (Boolean false) eff1
 			else eff1
 		in
-		let pre1 = Constraint.substitute_parameters_of pre parameters in
+		let pre1 = Constraint.substitute_free_variables_of pre parameters in
 		let pre2 =
 			if addDummy
 				then MapRef.add Variable.r_dummy (Boolean true) MapRef.empty
