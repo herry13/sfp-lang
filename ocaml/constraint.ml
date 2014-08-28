@@ -41,7 +41,7 @@ let rec apply store _constraint =
 			if clauses = [] then true
 			else iter clauses
 		)
-	| _ -> error 800
+	| _ -> error 701
 
 (**
  * mode:
@@ -56,7 +56,7 @@ let rec apply store _constraint =
  *)
 let rec nested_to_prevail reference value variables typeEnvironment mode =
 	let rec prevail_of r =
-		if r = [] then error 507
+		if r = [] then error 702
 		else if Variable.mem r variables then r
 		else prevail_of (prefix r)
 	in
@@ -72,7 +72,7 @@ let rec nested_to_prevail reference value variables typeEnvironment mode =
 			| 6, _          -> (GreaterEqual (r, value)) :: cs
 			| 7, _          -> (Less (r, value)) :: cs
 			| 8, _          -> (LessEqual (r, value)) :: cs
-			| _             -> error 508
+			| _             -> error 703
 		else
 			let cs1 = (Ne (prevail, Null)) :: cs in
 			let rs1 = r @-- prevail in
@@ -84,7 +84,7 @@ let rec nested_to_prevail reference value variables typeEnvironment mode =
 						let conclusion = And (iter (rp @++ rs1) []) in
 						(Imply (premise, conclusion)) :: acc
 					| Basic Null     -> acc
-					| _              -> error 509
+					| _              -> error 704
 			) cs1 (Variable.values_of prevail variables)
 	in
 	And (iter reference [])
@@ -116,7 +116,7 @@ and simplify_conjunction conjunction =
 	in
 	match conjunction with
 	| And clauses -> iter clauses []
-	| _           -> error 510
+	| _           -> error 705
 
 (**
  * simplify a disjunction formula
@@ -132,7 +132,7 @@ and simplify_disjunction disjunction =
 	in
 	match disjunction with
 	| Or clauses -> iter clauses []
-	| _          -> error 511
+	| _          -> error 706
 
 (**
  * cross product of disjunction clauses of a conjunction formula
@@ -158,10 +158,10 @@ and cross_product_of andClauses orClauses =
 						(simplify_conjunction (
 							And (List.append css andClauses))
 						) :: acc
-					| _       -> error 512
+					| _       -> error 707
 			) [] cs
 		| (Or cs1) :: (Or cs2) :: tail -> iter ((Or (cross cs1 cs2)) :: tail)
-		| _ -> error 513
+		| _ -> error 708
 	in
 	dnf_of (Or (iter orClauses))
 
@@ -183,7 +183,7 @@ and dnf_of _constraint variables typeEnvironment =
 		dnf_of_numeric r v variables typeEnvironment (fun x1 x2 -> x1 < x2)
 	| LessEqual (r, v) ->
 		dnf_of_numeric r v variables typeEnvironment (fun x1 x2 -> x1 <= x2)
-	| _ -> error 550
+	| _ -> error 709
 
 and dnf_of_numeric r v vars env comparator =
 	let convert x =
@@ -193,7 +193,7 @@ and dnf_of_numeric r v vars env comparator =
 					match v1 with
 					| Basic (Int i)   -> if comparator (float_of_int i) x then (Int i) :: acc else acc
 					| Basic (Float f) -> if comparator f x then (Float f) :: acc else acc
-					| _               -> error 552
+					| _               -> error 710
 				)
 			) [] (Variable.values_of r vars)
 		in
@@ -205,10 +205,10 @@ and dnf_of_numeric r v vars env comparator =
 		| Int i   -> convert (float_of_int i)
 		| Float f -> convert f
 		| Ref r1   -> (
-				if Variable.mem r1 vars then error 553 (* TODO: right-hand is a reference *)
-				else error 554 (* right-hand is nested reference *)
+				if Variable.mem r1 vars then error 711 (* TODO: right-hand is a reference *)
+				else error 712 (* right-hand is nested reference *)
 			)			
-		| _       -> error 551
+		| _       -> error 713
 	) else dnf_of (nested_to_prevail r v vars env 5) vars env
 
 (** convert equality to DNF, and convert a left-nested reference to prevail
@@ -229,7 +229,7 @@ and dnf_of_not_equal reference value variables typeEnvironment =
 				fun acc v ->
 					match v with
 					| Basic bv -> if bv = value then acc else bv :: acc
-					| _  -> error 514
+					| _  -> error 714
 						(* the right-hand side is not a basic value *)
 			) [] (Variable.values_of reference variables)
 		in
@@ -270,7 +270,7 @@ and dnf_of_negation _constraint variables typeEnvironment =
 						| Basic v1 ->
 							if List.mem v1 vector then acc
 							else (Eq (r, v1)) :: acc
-						| _        -> error 515
+						| _        -> error 715
 				) [] (Variable.values_of r variables)
 			in
 			if cs = [] then False
@@ -292,7 +292,7 @@ and dnf_of_membership reference vector variables typeEnvironment =
 					| Basic v ->
 						if List.mem v vector then (Eq (reference, v)) :: acc
 						else acc
-					| _        -> error 516
+					| _        -> error 716
 			) [] (Variable.values_of reference variables)
 		in
 		if clauses = [] then False
@@ -402,7 +402,7 @@ let rec substitute_free_variables_of _constraint parameters =
 	| In (r, v) ->
 		let r1 = substitute_parameter_of_reference r parameters in
 		In (r1, v)	
-	| _ -> error 1001
+	| _ -> error 717
 ;;
 
 
@@ -419,7 +419,7 @@ type data = {
 (** compile simple membership of global constraints **)
 let compile_membership isNegation reference vector data =
 	let rec prevail_of r =
-		if r = [] then error 507
+		if r = [] then error 718
 		else if Variable.mem r data.variables then r
 		else prevail_of (prefix r)
 	in
@@ -463,14 +463,14 @@ let compile_membership isNegation reference vector data =
 					simple    = acc.simple;
 					variables = acc.variables
 				}
-			| _ -> error 508
+			| _ -> error 719
 		) accumulator values
 ;;
 
 (** compile simple equality of global constraints **)
 let compile_equality isNegation reference value data =
 	let rec prevail_of r =
-		if r = [] then error 509
+		if r = [] then error 720
 		else if Variable.mem r data.variables then r
 		else prevail_of (prefix r)
 	in
@@ -521,7 +521,7 @@ let compile_equality isNegation reference value data =
 						simple = acc.simple;
 						variables = acc.variables
 					}
-			| _ -> error 510
+			| _ -> error 721
 		) accumulator values
 ;;
 
@@ -601,6 +601,6 @@ let global_of typeEnvironment flatStore variables =
 				variables typeEnvironment
 			in
 			(dnfGlobalConstraints1, globalImplications, variables1)
-		| _ -> error 519
+		| _ -> error 722
 	else (True, [], variables)
 ;;
