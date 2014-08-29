@@ -37,26 +37,26 @@ and sfBasicValue bv =
 	| String s   -> sfString s
 	| Null       -> sfNull
 	| Vector vec -> sfVector vec
-	| DR dr      -> sfDataReference dr
+	| Reference dr      -> sfDataReference dr
 
 let rec sfPrototype ps =
 	fun ns r s ->
 		match ps with
-		| B_P (pb, p) -> sfPrototype p ns r (sfBlock pb r s)
-		| R_P (pr, p) -> sfPrototype p ns r (Domain.inherit_proto s ns (sfReference pr) r)
+		| BlockPrototype (pb, p) -> sfPrototype p ns r (sfBlock pb r s)
+		| ReferencePrototype (pr, p) -> sfPrototype p ns r (Domain.inherit_proto s ns (sfReference pr) r)
 		| EmptyPrototype    -> s
 
 and sfValue v =
 	fun ns r s ->
 		match v with
-		| BV bv              -> Domain.bind s r (Domain.Basic (sfBasicValue bv))
-		| LR lr              -> Domain.bind s r (sfLinkReference lr r)
-		| P (EmptySchema, p) -> sfPrototype p ns r (Domain.bind s r (Domain.Store []))
-		| P (SID sid, p)     ->
+		| Basic bv              -> Domain.bind s r (Domain.Basic (sfBasicValue bv))
+		| Link lr              -> Domain.bind s r (sfLinkReference lr r)
+		| Prototype (EmptySchema, p) -> sfPrototype p ns r (Domain.bind s r (Domain.Store []))
+		| Prototype (SID sid, p)     ->
 			let s1 = Domain.bind s r (Domain.Store []) in
 			let s2 = Domain.inherit_proto s1 [] [sid] r in
 			sfPrototype p ns r s2
-		| Ac a               -> sfpAction a ns r s
+		| Action a               -> sfpAction a ns r s
 		| TBD                -> Domain.bind s r Domain.TBD
 
 (** 't' (type) is ignored since this function only evaluates the value **)
@@ -66,8 +66,8 @@ and sfAssignment (r, t, v) =
 and sfBlock block =
 	fun ns s ->
 		match block with
-		| A_B (a, b) -> sfBlock b ns (sfAssignment a ns s)
-		| G_B (g, b) -> sfBlock b ns (sfpGlobal g s)
+		| AssignmentBlock (a, b) -> sfBlock b ns (sfAssignment a ns s)
+		| GlobalBlock (g, b) -> sfBlock b ns (sfpGlobal g s)
 		| EmptyBlock -> s
 
 and sfpSchema (sid, parent, b) =
@@ -84,9 +84,9 @@ and sfpSchema (sid, parent, b) =
 and sfpContext ctx =
 	fun s ->
 		match ctx with
-		| A_C (a, c)   -> sfpContext c (sfAssignment a [] s)
-		| S_C (sc, c)  -> sfpContext c (sfpSchema sc s)
-		| G_C (g, c)   -> sfpContext c (sfpGlobal g s)
+		| AssignmentContext (a, c)   -> sfpContext c (sfAssignment a [] s)
+		| SchemaContext (sc, c)  -> sfpContext c (sfpSchema sc s)
+		| GlobalContext (g, c)   -> sfpContext c (sfpGlobal g s)
 		| EmptyContext -> s
 
 and sfpSpecificationFirstPass sfp = sfpContext sfp []
@@ -168,7 +168,7 @@ and sfpAction (params, _cost, conds, effs) =
 	let conditions =
 		match conds with
 		| EmptyCondition -> Domain.True
-		| Cond c         -> sfpConstraint c
+		| Condition c         -> sfpConstraint c
 	in
 	let effects = 
 		List.fold_left (fun acc (r, bv) -> (r, sfBasicValue bv) :: acc) [] effs

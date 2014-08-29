@@ -1,5 +1,7 @@
 (**
  * author: Herry (herry13@gmail.com)
+ *
+ * This module contains functions that are used in parsing.
  *)
 
 open Syntax

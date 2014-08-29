@@ -372,7 +372,7 @@ and sfBasicValue bv : lenv -> reference -> _type =
 		| String s   -> sfString s
 		| Null       -> sfNull
 		| Vector vec -> sfVector vec e ns
-		| DR dr      -> sfDataReference dr e ns
+		| Reference dr      -> sfDataReference dr e ns
 
 (**
  * @param proto prototype AST element
@@ -390,14 +390,14 @@ let rec sfPrototype proto first t_val : reference -> reference -> lenv -> lenv =
 		| EmptyPrototype ->
 			if first then assign e r t_val (TBasic TObject)          (* (Proto1) *)
 			else e
-		| B_P (pb, p)    ->
+		| BlockPrototype (pb, p)    ->
 			let t_block =
 				if first && t_val = TUndefined then TBasic TObject   (* (Proto2) *)
 				else t_val
 			in
 			let e1 = assign e r t_val t_block in
 			sfPrototype p false t_block ns r (sfpBlock pb r e1)
-		| R_P (pr, p)    ->
+		| ReferencePrototype (pr, p)    ->
 			let proto = sfReference pr in
 			match resolve e ns proto with
 			| _, Undefined -> error 106 ("prototype is not found: " ^ !^proto)
@@ -416,16 +416,16 @@ and sfValue v : reference -> reference -> _type -> lenv -> lenv =
 	fun ns r t e ->
 		match v with
 		| TBD     -> assign e r t TTBD
-		| BV bv   -> assign e r t (sfBasicValue bv e ns)
-		| LR link ->
+		| Basic bv   -> assign e r t (sfBasicValue bv e ns)
+		| Link link ->
 			(
 				let (r_link, t_link) = sfLinkReference link e ns r in
 				let e1 = assign e r t t_link in
 				if t_link <: TBasic TObject then copy e1 r_link r
 				else e1
 			)
-		| Ac a              -> assign e r t (TBasic TAction)
-		| P (schema, proto) ->
+		| Action a              -> assign e r t (TBasic TAction)
+		| Prototype (schema, proto) ->
 			match schema with
 			| SID sid ->
 				(
@@ -453,8 +453,8 @@ and sfpBlock block : reference -> lenv -> lenv =
 	 *)
 	fun ns e ->
 		match block with
-		| A_B (a, b) -> sfpBlock b ns (sfAssignment a ns e)
-		| G_B (g, b) -> sfpBlock b ns (sfpGlobal g e)
+		| AssignmentBlock (a, b) -> sfpBlock b ns (sfAssignment a ns e)
+		| GlobalBlock (g, b) -> sfpBlock b ns (sfpGlobal g e)
 		| EmptyBlock -> e
 
 and sfpSchema s : lenv -> lenv =
@@ -487,9 +487,9 @@ and sfpGlobal g : lenv -> lenv =
 and sfpContext ctx : lenv -> lenv =
 	fun e ->
 		match ctx with
-		| A_C (a, c) -> sfpContext c (sfAssignment a [] e)
-		| S_C (s, c) -> sfpContext c (sfpSchema s e)
-		| G_C (g, c) -> sfpContext c (sfpGlobal g e)
+		| AssignmentContext (a, c) -> sfpContext c (sfAssignment a [] e)
+		| SchemaContext (s, c) -> sfpContext c (sfpSchema s e)
+		| GlobalContext (g, c) -> sfpContext c (sfpGlobal g e)
 		| EmptyContext -> e
 
 and sfpSpecification sfp : env =

@@ -2,30 +2,30 @@
  * abstract syntax tree
  *******************************************************************)
 type sf            = block
-and  sfp           = sfpcontext
-and  sfpcontext    = A_C of assignment * sfpcontext
-                   | S_C of schema * sfpcontext
-                   | G_C of global * sfpcontext
+and  sfp           = context
+and  context       = AssignmentContext of assignment * context
+                   | SchemaContext     of schema * context
+                   | GlobalContext     of _constraint * context
                    | EmptyContext
-and  block         = A_B of assignment * block
-                   | G_B of global * block
+and  block         = AssignmentBlock of assignment * block
+                   | GlobalBlock     of _constraint * block
                    | EmptyBlock
 and  assignment    = reference * _type * value
-and  value         = BV  of basicValue
-                   | LR  of reference
-                   | P   of superSchema * prototype
-                   | Ac  of action
+and  value         = Basic     of basicValue
+                   | Link      of reference
+                   | Prototype of superSchema * prototype
+                   | Action    of action
                    | TBD
-and  prototype     = R_P of reference * prototype
-                   | B_P of block * prototype
+and  prototype     = ReferencePrototype of reference * prototype
+                   | BlockPrototype     of block * prototype
                    | EmptyPrototype
-and  basicValue    = Boolean of string
-                   | Int     of string
-                   | Float   of string
-                   | String  of string
+and  basicValue    = Boolean   of string
+                   | Int       of string
+                   | Float     of string
+                   | String    of string
                    | Null
-                   | Vector  of vector
-                   | DR      of reference
+                   | Vector    of vector
+                   | Reference of reference
 and  vector        = basicValue list
 and  reference     = string list
 
@@ -35,10 +35,12 @@ and superSchema = SID of string
                 | EmptySchema
 
 (** type syntax **)
-and _type     = TBasic   of basicType
-              | TVec     of _type
-              | TRef     of basicType
-              | TForward of reference * bool  (* r [link: true, data: false] *)
+and _type     = TBasic of basicType
+              | TVec   of _type
+              | TRef   of basicType
+                (* link-reference = (r, true)
+                   data-reference = (r, false) *)
+              | TForward of reference * bool
               | TUndefined
               | TTBD
 and basicType = TBool                         (* (Type Bool)   *)
@@ -53,28 +55,25 @@ and basicType = TBool                         (* (Type Bool)   *)
               | TRootSchema
 
 (** constraint syntax **)
-and global      = _constraint
-and _constraint = Eq of reference * basicValue
-                | Ne of reference * basicValue
-				| Greater of reference * basicValue
+and _constraint = Eq           of reference * basicValue
+                | Ne           of reference * basicValue
+				| Greater      of reference * basicValue
 				| GreaterEqual of reference * basicValue
-				| Less of reference * basicValue
-				| LessEqual of reference * basicValue
-                | Not of _constraint
-                | Imply of _constraint * _constraint
-                | And of _constraint list
-                | Or of _constraint list
-                | In of reference * vector
+				| Less         of reference * basicValue
+				| LessEqual    of reference * basicValue
+                | Not          of _constraint
+                | Imply        of _constraint * _constraint
+                | And          of _constraint list
+                | Or           of _constraint list
+                | In           of reference * vector
 
 (** action syntax **)
-and action     = parameters * cost * conditions * effects
-and parameters = parameter list
+and action     = parameter list * cost * conditions * effect list
 and parameter  = string * _type
 and cost       = Cost of string
                | EmptyCost
-and conditions = Cond of _constraint
+and conditions = Condition of _constraint
                | EmptyCondition
-and effects    = effect list
 and effect     = reference * basicValue
 
 (*******************************************************************
