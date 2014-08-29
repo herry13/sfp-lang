@@ -43,7 +43,7 @@ val index_of_value : value -> t -> int
  *****************************************************************)
 
 (* val make_ts : t MapRef.t -> t array -> ts *)
-val make_ts : Type.env -> flatstore -> Type.env -> flatstore -> Type.typevalue -> ts
+val make_ts : Type.map -> flatstore -> Type.map -> flatstore -> Type.type_values -> ts
 
 val mem : reference -> ts -> bool
 

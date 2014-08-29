@@ -210,7 +210,7 @@ let of_sfp astInit astGoal =
 	let flatStoreInit = normalise storeInit in
 	let flatStoreGoal = normalise storeGoal in
 	(* step 1a: generate a type->value map *)
-	let typeValues = Type.make_typevalue typeEnvInit flatStoreInit
+	let typeValues = Type.make_type_values typeEnvInit flatStoreInit
 		typeEnvGoal flatStoreGoal
 	in
 	(* step 2: translate *)

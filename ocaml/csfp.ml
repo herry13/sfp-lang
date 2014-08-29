@@ -120,7 +120,7 @@ let main =
 	in
 	let do_type =
 		fun file ->
-			print_endline (Type.string_of_env
+			print_endline (Type.string_of_map
 				(Type.sfpSpecification (ast_of_file file)))
 	in
 	let verify_files () =

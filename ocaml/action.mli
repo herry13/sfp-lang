@@ -46,7 +46,7 @@ val json_of_parallel_action : t -> int list -> int list -> string
 val json_of_actions : t list -> string
 
 (** ground a collection of actions **)
-val ground_actions : Type.env -> Variable.ts -> Type.typevalue ->
+val ground_actions : Type.map -> Variable.ts -> Type.type_values ->
                      _constraint -> _constraint list -> ts
 
 (** iterates a collection of actions **)

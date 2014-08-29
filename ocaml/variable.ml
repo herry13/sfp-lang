@@ -114,7 +114,7 @@ let string_of_variables vars =
 
 
 (* let make_ts map arr = { map = map; arr = arr } *)
-let make_ts (env_0: Type.env) (fs_0: flatstore) (env_g: Type.env) (fs_g: flatstore) (tvalues: Type.typevalue) : ts =
+let make_ts env_0 fs_0 env_g fs_g tvalues =
 	let t_object = Syntax.TBasic Syntax.TObject in
 	let type_of_var r =
 		match (Type.type_of r env_0), (Type.type_of r env_g) with
