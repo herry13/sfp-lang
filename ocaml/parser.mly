@@ -31,7 +31,8 @@ open Syntax
 %token <Syntax.block -> Syntax.block> SF_INCLUDE
 %token <Syntax.sfpcontext -> Syntax.sfpcontext> SFP_INCLUDE
 
-/* entry point for main-file is 'sfp', for included file is 'incontext_included' or 'inblock_included' */
+/* entry point for main-file is 'sfp', for included file is
+   'incontext_included' or 'inblock_included' */
 %start inblock_included sfp incontext_included
 %type <Syntax.block -> Syntax.block> inblock_included
 %type <Syntax.sfp> sfp
