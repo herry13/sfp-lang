@@ -7,14 +7,14 @@ open Array
 
 let ast_of_file file =
 	let dummyLexbuf = Lexing.from_string "" in
-	let lexstack = Helper.create file Lexer.token in
+	let lexstack = Parser_helper.create file Lexer.token in
 	try
-		Parser.sfp (Helper.get_token lexstack) dummyLexbuf
+		Parser.sfp (Parser_helper.get_token lexstack) dummyLexbuf
 	with e ->
 		try
-			Helper.check_error e lexstack
+			Parser_helper.check_error e lexstack
 		with
-		| Helper.ParseError (fname, lnum, lpos, token) ->
+		| Parser_helper.ParseError (fname, lnum, lpos, token) ->
 			prerr_string ("--- Parse error ---\nfile:   " ^ fname ^
 				"\nline:   " ^ (string_of_int lnum) ^
 				"\ncolumn: " ^ (string_of_int lpos) ^

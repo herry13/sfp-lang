@@ -1,9 +1,5 @@
 (**
- * sfhelper.ml - helper functions
  * author: Herry (herry13@gmail.com)
- *
- * changelog:
- * 22.07.2014 - first released
  *)
 
 open Syntax
@@ -12,9 +8,7 @@ open Syntax
  * lexer helper type and functions
  *******************************************************************)
 
-(**
- * The Lexstack type.
- *)
+(** The Lexstack type. **)
 type 'a t =
 	{
 		mutable stack    : (string * in_channel * Lexing.lexbuf) list;
@@ -24,11 +18,12 @@ type 'a t =
 		lexfunc          : Lexing.lexbuf -> 'a;
 	}
 
-(* (filename, line-number, column-number, token) *)
+(** (filename, line-number, column-number, token) **)
 exception ParseError of string * int * int * string
 
-(**
- * Create a lexstack with an initial top level filename and the lexer function
+(** 
+ * Create a lexstack with an initial top level filename and the lexer
+ * function.
  *)
 let create top_filename lexer_function =
 	let chan = open_in top_filename in
@@ -40,17 +35,15 @@ let create top_filename lexer_function =
 		lexfunc = lexer_function
 	}
 
-(**
- * Get the current lexeme.
- *)
+(** Get the current lexeme. **)
 let lexeme ls = Lexing.lexeme ls.lexbuf
 
-(**
- * Get filename, line number and column number of current lexeme.
- *)
+(** Get filename, line number and column number of current lexeme. **)
 let current_pos ls =
 	let pos = Lexing.lexeme_end_p ls.lexbuf in
-	let linepos = pos.Lexing.pos_cnum - pos.Lexing.pos_bol - String.length (Lexing.lexeme ls.lexbuf) in
+	let linepos = pos.Lexing.pos_cnum - pos.Lexing.pos_bol -
+		String.length (Lexing.lexeme ls.lexbuf)
+	in
 	ls.filename, pos.Lexing.pos_lnum, linepos
 
 (**
@@ -61,8 +54,9 @@ let current_pos ls =
 let rec get_token ls dummy_lexbuf =
 	let token = ls.lexfunc ls.lexbuf in
 	match token with
-	| Parser.INCLUDE file -> (* parse included file *)
-		(* this SF-style include (the included file must be legal statements) **)
+	| Parser.INCLUDE file ->
+		(* parse included file: this is SF-style include (the included file
+		   must be legal statements) *)
 		Parser.SF_INCLUDE
 		(
 			let lexstack = create file Lexer.token in
@@ -81,8 +75,9 @@ let rec get_token ls dummy_lexbuf =
 	| Parser.EOF ->
 		(
 			match ls.stack with
-			| [] -> Parser.EOF      (* buffer is empty, then return EOF *)
-			| (fn, ch, lb) :: tail -> (* buffer isn't empty, then continue to parse top file *) 
+			| [] -> Parser.EOF (* buffer is empty, then return EOF *)
+			| (fn, ch, lb) :: tail ->
+				(* buffer isn't empty, then continue to parse top file *) 
 				ls.filename <- fn;
 				ls.chan <- ch;
 				ls.stack <- tail;
