@@ -19,6 +19,7 @@ and value     = Basic of basic
               | Link of reference
               | Action of action
               | TBD
+              | Unknown
 and _value    = Val of value
               | Undefined
 and cell      = ident * value
@@ -321,7 +322,8 @@ and json_of_value = function
 	| Store child   -> "{" ^ json_of_store1 child ^ "}"
 	| Global global -> json_of_constraint global
 	| Action action -> json_of_action action
-	| TBD           -> "$.TBD"
+	| TBD           -> "\"§TBD\""
+	| Unknown       -> "\"§Unknown\""
 
 and json_of_basic = function
 	| Boolean b  -> string_of_bool b
@@ -415,7 +417,8 @@ and yaml_of_cell identifier value tab =
 		| Store child   -> "\n" ^ yaml_of_store1 child (tab ^ "  ")
 		| Global global -> yaml_of_constraint global (tab ^ "  ")
 		| Action action -> yaml_of_action action (tab ^ "  ")
-		| TBD           -> "TBD"
+		| TBD           -> "§TBD"
+		| Unknown       -> "§Unknown"
 	in
 	_name ^ _value
 

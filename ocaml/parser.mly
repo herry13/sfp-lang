@@ -16,7 +16,7 @@ open Syntax
 %token <string> INT
 %token <string> FLOAT
 %token <string> STRING
-%token NULL TOK_TBD
+%token NULL TOK_TBD TOK_UNKNOWN
 %token <string> INCLUDE
 %token <string> SFP_INCLUDE_FILE
 %token <string> ID
@@ -73,8 +73,9 @@ value
 	| protos                 { Prototype (EmptySchema, $1) }
 
 equal_value
-	: basic    { Basic $1 }
-	| TOK_TBD  { TBD }
+	: basic       { Basic $1 }
+	| TOK_TBD     { TBD }
+	| TOK_UNKNOWN { Unknown }
 
 protos
 	: EXTENDS prototypes { $2 }

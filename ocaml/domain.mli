@@ -18,6 +18,7 @@ and value     = Basic of basic
               | Link of reference
               | Action of action
               | TBD
+              | Unknown
 and _value    = Val of value
               | Undefined
 and cell      = ident * value

@@ -16,6 +16,7 @@ and  value         = Basic     of basicValue
                    | Prototype of superSchema * prototype
                    | Action    of action
                    | TBD
+                   | Unknown
 and  prototype     = ReferencePrototype of reference * prototype
                    | BlockPrototype     of block * prototype
                    | EmptyPrototype
@@ -43,6 +44,7 @@ and _type     = TBasic   of basicType
               | TForward of reference * bool
               | TUndefined
               | TTBD
+              | TUnknown
 and basicType = TBool                         (* (Type Bool)   *)
               | TInt                          (* (Type Int)    *)
               | TFloat                        (* (Type Float)  *)
@@ -97,6 +99,7 @@ and string_of_value = function
 	| Prototype (sid, p) -> (string_of_super_schema sid) ^ (string_of_proto p)
 	| Action a       -> string_of_action a
 	| TBD        -> " TBD"
+	| Unknown -> " Unknown"
 
 and string_of_proto = function
 	| ReferencePrototype (r, p) -> " extends " ^ (string_of_ref r) ^
@@ -132,6 +135,7 @@ and string_of_type = function
 	                              (String.concat "." r) ^ ")"
 	| TUndefined           -> "!"
 	| TTBD                 -> "?TBD"
+	| TUnknown             -> "?Unknown"
 
 and string_of_basic_type = function
 	| TBool               -> "bool"
