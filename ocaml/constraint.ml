@@ -44,6 +44,10 @@ let rec apply store _constraint =
 	| _ -> error 701
 
 (**
+ * This function compiles a nested reference at the left-hand side of
+ * a constraint into a set of constraints, each of which has a prevail
+ * reference at the right-hand side.
+ *
  * mode:
  * - 1 = Equality
  * - 2 = NotEquality
@@ -185,31 +189,66 @@ and dnf_of _constraint variables typeEnvironment =
 		dnf_of_numeric r v variables typeEnvironment (fun x1 x2 -> x1 <= x2)
 	| _ -> error 709
 
-and dnf_of_numeric r v vars env comparator =
+and dnf_of_numeric r v variables typeEnvironment comparator =
 	let convert x =
 		let values =
 			Array.fold_left (
 				fun acc v1 -> (
 					match v1 with
-					| Basic (Int i)   -> if comparator (float_of_int i) x then (Int i) :: acc else acc
-					| Basic (Float f) -> if comparator f x then (Float f) :: acc else acc
-					| _               -> error 710
+					| Basic (Int i) ->
+						if comparator (float_of_int i) x then (Int i) :: acc
+						else acc
+					| Basic (Float f) ->
+						if comparator f x then (Float f) :: acc
+						else acc
+					| _ ->
+						error 710
 				)
-			) [] (Variable.values_of r vars)
+			) [] (Variable.values_of r variables)
 		in
 		if values = [] then False
-		else dnf_of (In (r, values)) vars env
+		else dnf_of (In (r, values)) variables typeEnvironment
 	in
-	if Variable.mem r vars then (
+	if Variable.mem r variables then (
 		match v with
 		| Int i   -> convert (float_of_int i)
 		| Float f -> convert f
-		| Ref r1   -> (
-				if Variable.mem r1 vars then error 711 (* TODO: right-hand is a reference *)
-				else error 712 (* right-hand is nested reference *)
-			)			
+		| Ref r2  ->
+			let conjunction r1 v1 r2 v2 = And [Eq (r1, v1); Eq (r2, v2)] in
+			if Variable.mem r2 variables then
+				let leftValues = Variable.values_of r variables in
+				let rightValues = Variable.values_of r2 variables in
+				let clauses =
+					Array.fold_left (fun acc1 leftValue ->
+						Array.fold_left (fun acc2 rightValue ->
+							match leftValue, rightValue with
+							| Basic (Int v1), Basic (Int v2) when
+							  comparator (float_of_int v1) (float_of_int v2) ->
+								  (conjunction r (Int v1) r2 (Int v2)) :: acc2
+							| Basic (Int v1), Basic (Float v2) when
+							  comparator (float_of_int v1) v2 ->
+								  (conjunction r (Int v1) r2 (Float v2)) ::
+									  acc2
+							| Basic (Float v1), Basic (Float v2) when
+							  comparator v1 v2 ->
+  								  (conjunction r (Float v1) r2 (Float v2)) ::
+									  acc2
+							| Basic (Float v1), Basic (Int v2) when
+							  comparator v1 (float_of_int v2) ->
+								  (conjunction r (Float v1) r2 (Int v2)) ::
+									  acc2
+							| _ -> acc2
+						) acc1 rightValues
+					) [] leftValues
+				in
+				Or clauses
+				(* error 711 *) (* TODO: right-hand is a reference *)
+			else
+				error 712 (* right-hand is a nested reference *)
 		| _       -> error 713
-	) else dnf_of (nested_to_prevail r v vars env 5) vars env
+	) else
+		dnf_of (nested_to_prevail r v variables typeEnvironment 5)
+			variables typeEnvironment
 
 (** convert equality to DNF, and convert a left-nested reference to prevail
     ones **)

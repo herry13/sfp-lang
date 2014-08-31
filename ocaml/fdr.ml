@@ -96,7 +96,7 @@ let of_goal buffer variables useDummy =
  * Generate the FDR mutex
  *)
 let of_mutex buffer variables =
-	Buffer.add_char buffer '\n';
+	(*Buffer.add_char buffer '\n';
 	Buffer.add_string buffer (string_of_int (Variable.total variables));
 	Variable.iter (fun var ->
 		Buffer.add_string buffer "\nbegin_mutex_group\n";
@@ -110,7 +110,8 @@ let of_mutex buffer variables =
 			Buffer.add_char buffer '\n';
 		) var;
 		Buffer.add_string buffer "end_mutex_group";
-	) variables
+	) variables*)
+	Buffer.add_string buffer "\n0"
 ;;
 
 (**
