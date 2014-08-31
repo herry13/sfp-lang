@@ -51,14 +51,14 @@ The simplest command to use `csfp` is
 
 	$ ./csfp spec.sfp
 
-This will parse the specification and generate the final result in JSON. In addition, there are several options that can be used:
+This will parse the specification in file `spec.sfp` and generate the final result in JSON. In addition, there are several options that can be used:
 - `./csfp -ast spec.sfp` : print an abstract syntax tree of the specification, which is very useful to quickly find any syntax error.
 - `./csfp -type spec.sfp` : evaluate the types of every element and check any type-error on the specification.
 - `./csfp -json spec.sfp` : evaluate every element and generate the final result in JSON.
 - `./csfp -yaml spec.sfp` : evaluate every element and generate the final result in YAML.
 - `./csfp -fs spec.sfp` : print variables and their values in a flat-structure.
 - `./csfp -init init.sfp -goal goal.sfp -fdr` : given an initial state in `init.sfp` and a goal state in `goal.sfp`, generate and print a Finite Domain Representation of this configuration task -- the output can be given to the FastDownward search engine to find a solution plan.
-- `./csfp -fd -init init.sfp -goal goal.sfp -fd` :  given an initial state in `init.sfp` and a goal state in `goal.sfp`, generate and print the solution plan of this configuration task. **Note**: environment variable `FD_PREPROCESSOR` and `FD_SEARCH` must be set with the path of the FastDownward preprocessor and search engine respectively.
+- `./csfp -init init.sfp -goal goal.sfp -fd` :  given an initial state in `init.sfp` and a goal state in `goal.sfp`, generate and print the solution plan of this configuration task. **Note**: environment variable `FD_PREPROCESSOR` and `FD_SEARCH` must be set with the path of the FastDownward preprocessor and search engine respectively.
 
 
 Example
