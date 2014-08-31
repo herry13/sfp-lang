@@ -19,14 +19,15 @@ This implementation is an SFP compiler based on its formal semantics. The curren
 - Static schema
 - Basic values: boolean, number, string, null, and vector
 - Data and link references (including _forward_ references)
+- `TBD` (to be defined) value: in planning, this has **any value** semantics (loose specification)
 - Object prototypes
 - Actions
 - Global constraints
 - File inclusion
 - Keywords: `root`, `parent`, and `this`
 - Finite Domain Representation ([FDR](http://www.fast-downward.org/TranslatorOutputFormat)) generator for planning
-- `TBD` (to be defined) value: in planning, this has **any value** semantics (loose specification)
 - Partial-order plan generator
+- Numeric comparison operator: `<`, `<=`, `>`, `>=`
 
 The language is being developed to support other features. Click [here](https://github.com/herry13/sfp-lang/issues?q=is%3Aopen+is%3Aissue+label%3A%22new+feature%22) for more details.
 
