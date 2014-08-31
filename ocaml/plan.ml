@@ -1,19 +1,30 @@
 open Common
 open Action
 
-(* type Action.t = reference * basic MapStr.t * cost * basic MapRef.t * basic MapRef.t *)
-type sequential = t array
+(**
+ * This module is for handling a sequential or parallel plan.
+ *)
 
-type parallel = { actions: t array; before: SetInt.t array; after: SetInt.t array }
+(** type of sequential plan **)
+type sequential = Action.t array
+
+(** type of parallel plan **)
+type parallel = {
+	actions : Action.t array;
+	before  : SetInt.t array;
+	after   : SetInt.t array
+}
 
 (* TODO *)
-let sequential_of (plan: parallel) : sequential = raise (Failure "not implemented")
+let sequential_of (plan: parallel) : sequential =
+	raise (Failure "not implemented")
 
 (** generate a JSON of a sequential plan **)
-let json_of_sequential (plan: sequential) : string =
+let json_of_sequential plan =
 	let buf = Buffer.create 42 in
-	Buffer.add_string buf "{\"type\":\"sequential\",\"version\":1,\"actions\":[";
-	if plan <> [| |] then (
+	Buffer.add_string buf
+		"{\"type\":\"sequential\",\"version\":1,\"actions\":[";
+	if Array.length plan > 0 then (
 		Array.iteri (fun i a ->
 			if i = 0 then Buffer.add_char buf ',';
 			Buffer.add_string buf (json_of a);
@@ -23,8 +34,8 @@ let json_of_sequential (plan: sequential) : string =
 	Buffer.contents buf
 
 (** convert a sequential to a parallel (partial-order) plan **)
-let parallel_of (seq: sequential) : parallel =
-	let actions = seq in
+let parallel_of sequentialPlan =
+	let actions = sequentialPlan in
 	let before = Array.make (Array.length actions) SetInt.empty in
 	let after = Array.make (Array.length actions) SetInt.empty in
 	let prev_indexes = ref [] in
@@ -53,7 +64,7 @@ let parallel_of (seq: sequential) : parallel =
 	{ actions = actions; before = before; after = after }
 
 (** generate a JSON of a parallel plan **)
-let json_of_parallel (plan: parallel) : string =
+let json_of_parallel plan =
 	let buf = Buffer.create 42 in
 	Buffer.add_string buf "{\"type\":\"parallel\",\"version\":2,\"actions\":[";
 	if (Array.length plan.actions) > 0 then (

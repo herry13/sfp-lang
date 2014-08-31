@@ -28,6 +28,10 @@ and ident     = string
 (** constraint elements **)
 and _constraint = Eq of reference * basic
                 | Ne of reference * basic
+				| Greater of reference * basic
+				| GreaterEqual of reference * basic
+				| Less of reference * basic
+				| LessEqual of reference * basic
                 | Not of _constraint
                 | Imply of _constraint * _constraint
                 | And of _constraint list
@@ -37,7 +41,8 @@ and _constraint = Eq of reference * basic
                 | False
 
 (** action elements : name * parameters * cost * preconditions * effects **)
-and action         = reference * parameter_type list * cost * _constraint * effect list
+and action         = reference * parameter_type list * cost * _constraint *
+                     effect list
 and parameter_type = ident * Syntax._type
 and cost           = int
 and effect         = reference * basic
@@ -88,7 +93,7 @@ val inherit_proto : store -> reference -> reference -> reference -> store
 
 val accept : store -> reference -> store -> reference -> store
 
-val tbd_exists : store -> bool
+val value_TBD_exists : store -> bool
 
 (*******************************************************************
  * domain convertion functions to string, JSON, or YAML
@@ -103,7 +108,6 @@ val json_of_store : store -> string
 val json_of_value : value -> string
 
 val json_of_constraint : _constraint -> string
-
 
 val from_json : string -> value
 
@@ -135,6 +139,7 @@ val string_of_setvalue : SetValue.t -> string
 
 type ground_parameters = basic MapStr.t
 
-val substitute_parameter_of_reference : reference -> ground_parameters -> reference
+val substitute_parameter_of_reference : reference -> ground_parameters ->
+	reference
 
 val substitute_parameter_of_basic_value : basic -> ground_parameters -> basic

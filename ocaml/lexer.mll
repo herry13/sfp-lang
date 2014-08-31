@@ -100,6 +100,10 @@ rule token =
 	| '*'         { ASTERIX }
 	| '='         { EQUAL }
 	| "!="        { NOT_EQUAL }
+	| ">="        { TOK_GREATER_EQUAL }
+	| "<="        { TOK_LESS_EQUAL }
+	| '>'         { TOK_GREATER }
+	| '<'         { TOK_LESS }
 	| int         { INT (Lexing.lexeme lexbuf) }
 	| float       { FLOAT (Lexing.lexeme lexbuf) }
 	| true_value  { BOOL "true" }

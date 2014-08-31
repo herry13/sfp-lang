@@ -22,7 +22,7 @@ BYTECODELIB= \
 	syntax.cmo \
 	lexer.cmo \
 	parser.cmo \
-	helper.cmo \
+	parser_helper.cmo \
 	domain.cmo \
 	type.cmo \
 	variable.cmo \
@@ -40,7 +40,7 @@ NATIVELIB= \
 	syntax.cmx \
 	lexer.cmx \
 	parser.cmx \
-	helper.cmx \
+	parser_helper.cmx \
 	domain.cmx \
 	type.cmx \
 	variable.cmx \
@@ -54,7 +54,7 @@ NATIVELIB= \
 # default
 build: csfp
 
-csfp: csfp.ml action helper valuation type fdr plan
+csfp: csfp.ml action parser_helper valuation type fdr plan
 	$(COMPILER) -c csfp.ml
 ifeq ($(NATIVE),1)
 	$(COMPILER) -o $(NAME) $(NATIVELIB)
@@ -75,8 +75,8 @@ lexer: lexer.mll parser
 	ocamllex lexer.mll
 	$(COMPILER) -c lexer.ml
 
-helper: helper.ml parser lexer
-	$(COMPILER) -c helper.ml
+parser_helper: parser_helper.ml parser lexer
+	$(COMPILER) -c parser_helper.ml
 
 domain: common syntax domain.mli domain.ml
 	$(COMPILER) -c domain.mli

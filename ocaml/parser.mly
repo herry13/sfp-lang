@@ -2,8 +2,8 @@
  * sfparser.ml - OCaml Yacc file (ocamlyacc)
  * author: Herry (herry13@gmail.com)
  *
- * changelog:
- * 22.07.2014 - first released
+ * This is a parser to generate an abstract syntax tree from a concrete
+ * syntax tree.
  */
 
 %{
@@ -17,22 +17,26 @@ open Syntax
 %token <string> FLOAT
 %token <string> STRING
 %token NULL TOK_TBD
-%token <string> ID
 %token <string> INCLUDE
 %token <string> SFP_INCLUDE_FILE
-%token <Syntax.block -> Syntax.block> SF_INCLUDE
-%token <Syntax.sfpcontext -> Syntax.sfpcontext> SFP_INCLUDE
+%token <string> ID
 %token EXTENDS COMMA DATA BEGIN END SEP
 %token LBRACKET RBRACKET EOS EOF
 %token ISA SCHEMA ASTERIX COLON TBOOL TINT TFLOAT TSTR TOBJ
 %token GLOBAL EQUAL NOT_EQUAL IF THEN IN NOT LPARENTHESIS RPARENTHESIS
+%token TOK_GREATER TOK_GREATER_EQUAL TOK_LESS TOK_LESS_EQUAL
 %token COST CONDITIONS EFFECTS ACTION
 
-/* entry point for main-file is 'sfp', for included file is 'incontext_included' or 'inblock_included' */
+/* entry point to included file */
+%token <Syntax.block -> Syntax.block> SF_INCLUDE
+%token <Syntax.context -> Syntax.context> SFP_INCLUDE
+
+/* entry point for main-file is 'sfp', for included file is
+   'incontext_included' or 'inblock_included' */
 %start inblock_included sfp incontext_included
 %type <Syntax.block -> Syntax.block> inblock_included
 %type <Syntax.sfp> sfp
-%type <Syntax.sfpcontext -> Syntax.sfpcontext> incontext_included
+%type <Syntax.context -> Syntax.context> incontext_included
 
 %%
 
@@ -43,18 +47,18 @@ incontext_included
 	: sfpcontext EOF { $1 }
 
 sfpcontext
-	: SCHEMA schema sfpcontext   { fun c -> S_C ($2, $3 c) }
-	| GLOBAL global sfpcontext   { fun c -> G_C ($2, $3 c) }
+	: SCHEMA schema sfpcontext   { fun c -> SchemaContext ($2, $3 c) }
+	| GLOBAL global sfpcontext   { fun c -> GlobalContext ($2, $3 c) }
 	| SFP_INCLUDE EOS sfpcontext { fun c -> $1 ($3 c) }
-	| assignment sfpcontext      { fun c -> A_C ($1, $2 c) }
+	| assignment sfpcontext      { fun c -> AssignmentContext ($1, $2 c) }
 	|                            { fun c -> c }
 
 inblock_included
 	: block EOF { $1 }
 
 block
-	: assignment block     { fun b -> A_B ($1, $2 b) }
-	| GLOBAL global block  { fun b -> G_B ($2, $3 b) }
+	: assignment block     { fun b -> AssignmentBlock ($1, $2 b) }
+	| GLOBAL global block  { fun b -> GlobalBlock ($2, $3 b) }
 	| SF_INCLUDE EOS block { fun b -> $1 ($3 b) }
 	|                      { fun b -> b }
 
@@ -64,32 +68,32 @@ assignment
 
 value
 	: EQUAL equal_value EOS  { $2 }
-	| link_reference EOS     { LR $1 }
-	| ISA ID protos          { P (SID $2, $3) }
-	| protos                 { P (EmptySchema, $1) }
+	| link_reference EOS     { Link $1 }
+	| ISA ID protos          { Prototype (SID $2, $3) }
+	| protos                 { Prototype (EmptySchema, $1) }
 
 equal_value
-	: basic    { BV $1 }
+	: basic    { Basic $1 }
 	| TOK_TBD  { TBD }
 
 protos
 	: EXTENDS prototypes { $2 }
-	| BEGIN block END    { B_P ($2 EmptyBlock, EmptyPrototype) }
+	| BEGIN block END    { BlockPrototype ($2 EmptyBlock, EmptyPrototype) }
 
 prototypes
     : prototype COMMA prototypes { $1 $3 }
     | prototype                  { $1 EmptyPrototype }
 
 prototype
-    : BEGIN block END { fun p -> B_P ($2 EmptyBlock, p) }
-    | reference       { fun p -> R_P ($1, p) } 
+    : BEGIN block END { fun p -> BlockPrototype ($2 EmptyBlock, p) }
+    | reference       { fun p -> ReferencePrototype ($1, p) } 
 
 basic
     : BOOL           { Boolean $1 }
     | INT            { Int $1 }
     | FLOAT          { Float $1 }
     | STRING         { String $1 }
-    | data_reference { DR $1 }
+    | data_reference { Reference $1 }
     | NULL           { Null }
     | vector         { Vector $1 }
 
@@ -153,12 +157,28 @@ sfp_constraint
 	| negation                              { $1 }
 	| implication                           { $1 }
 	| membership                            { $1 }
+	| greater_than                          { $1 }
+	| less_than                             { $1 }
+	| greater_equal                         { $1 }
+	| less_equal                            { $1 }
 
 equal
 	: reference EQUAL basic EOS { Eq ($1, $3) }
 
 not_equal
 	: reference NOT_EQUAL basic EOS { Ne ($1, $3) }
+
+greater_than
+	: reference TOK_GREATER basic EOS { Greater ($1, $3) }
+
+greater_equal
+	: reference TOK_GREATER_EQUAL basic EOS { GreaterEqual ($1, $3) }
+
+less_than
+	: reference TOK_LESS basic EOS { Less ($1, $3) }
+
+less_equal
+	: reference TOK_LESS_EQUAL basic EOS { LessEqual ($1, $3) }
 
 implication
 	: IF sfp_constraint THEN sfp_constraint { Imply ($2, $4) }
@@ -171,8 +191,8 @@ membership
 
 action
 	: parameters BEGIN cost conditions EFFECTS BEGIN effects END END
-		{
-			Ac ($1, $3, $4, $7)
+		{ 
+			Action ($1, $3, $4, $7)
 		}
 
 parameters
@@ -191,7 +211,7 @@ cost
 	|                    { EmptyCost }
 
 conditions
-	: CONDITIONS sfp_constraint { Cond $2 }
+	: CONDITIONS sfp_constraint { Condition $2 }
 	|                           { EmptyCondition }
 
 effects

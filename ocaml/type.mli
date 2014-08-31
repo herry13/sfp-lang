@@ -4,7 +4,7 @@ open Common
  * type environment
  *******************************************************************)
 
-type env = Syntax._type MapRef.t
+type map = Syntax._type MapRef.t
 
 (*******************************************************************
  * functions of type environment
@@ -12,11 +12,11 @@ type env = Syntax._type MapRef.t
 
 exception TypeError of int * string
 
-val string_of_env : env -> string
+val string_of_map : map -> string
 
-val sfpSpecification : Syntax.sfp -> env
+val sfpSpecification : Syntax.sfp -> map
 
-val type_of : Domain.reference -> env -> Syntax._type
+val type_of : Domain.reference -> map -> Syntax._type
 
 val subtype : Syntax._type -> Syntax._type -> bool
 
@@ -27,10 +27,11 @@ val subtype : Syntax._type -> Syntax._type -> bool
 
 module MapType : Map.S with type key = Syntax._type
 
-type typevalue = Domain.SetValue.t MapType.t
+type type_values = Domain.SetValue.t MapType.t
 
-val values_of : Syntax._type -> typevalue -> Domain.SetValue.t
+val values_of : Syntax._type -> type_values -> Domain.SetValue.t
 
-val add_value : Syntax._type -> Domain.value -> typevalue -> typevalue
+val add_value : Syntax._type -> Domain.value -> type_values -> type_values
 
-val make_typevalue : env -> Domain.flatstore -> env -> Domain.flatstore -> Domain.SetValue.t MapType.t
+val make_type_values : map -> Domain.flatstore -> map ->
+	Domain.flatstore -> Domain.SetValue.t MapType.t

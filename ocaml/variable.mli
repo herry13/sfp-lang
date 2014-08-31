@@ -2,9 +2,19 @@ open Common
 open Domain
 
 (** variable := name * index * values * init * goal **)
-type t = { name: reference; index: int; values: value array; init: value; goal: value }
+type t = {
+	name   : reference;
+	index  : int;
+	values : value array;
+	init   : value;
+	goal   : value
+}
 
-type ts = { map: t MapRef.t; arr: t array }
+(** collection of variables **)
+type ts = {
+	map : t MapRef.t;
+	arr : t array
+}
 
 
 (*****************************************************************
@@ -42,8 +52,8 @@ val index_of_value : value -> t -> int
  * variables functions
  *****************************************************************)
 
-(* val make_ts : t MapRef.t -> t array -> ts *)
-val make_ts : Type.env -> flatstore -> Type.env -> flatstore -> Type.typevalue -> ts
+val make_ts : Type.map -> flatstore -> Type.map -> flatstore ->
+	Type.type_values -> ts
 
 val mem : reference -> ts -> bool
 
@@ -66,5 +76,3 @@ val remove_value_from : reference -> value -> ts -> ts
 val remove_values_from : reference -> vector -> ts -> ts
 
 val string_of_variables : ts -> string
-
-

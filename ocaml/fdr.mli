@@ -1,4 +1,8 @@
-type t = { variables: Variable.ts; actions: Action.ts; global: Domain._constraint }
+type t = {
+	variables : Variable.ts;
+	actions   : Action.ts;
+	global    : Domain._constraint
+}
 
 val of_sfp : Syntax.sfp -> Syntax.sfp -> t
 
