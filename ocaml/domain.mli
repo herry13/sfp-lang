@@ -93,7 +93,7 @@ val inherit_proto : store -> reference -> reference -> reference -> store
 
 val accept : store -> reference -> store -> reference -> store
 
-val tbd_exists : store -> bool
+val value_TBD_exists : store -> bool
 
 (*******************************************************************
  * domain convertion functions to string, JSON, or YAML

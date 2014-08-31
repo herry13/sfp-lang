@@ -247,14 +247,15 @@ and accept store baseReference store1 baseReference1 =
 		accept sq baseReference sp baseReference1
 ;;
 
-let rec tbd_exists store =
+let rec value_TBD_exists store =
 	match store with
 	| []            -> false
 	| (id, v) :: ss ->
 		match v with
 		| TBD      -> true
-		| Store sp -> if tbd_exists sp then true else tbd_exists ss
-		| _        -> tbd_exists ss
+		| Store sp -> if value_TBD_exists sp then true
+		              else value_TBD_exists ss
+		| _        -> value_TBD_exists ss
 ;;
 
 

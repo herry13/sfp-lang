@@ -6,5 +6,5 @@ val sfpSpecificationSecondPass : sfp -> Domain.store
 
 val sfpSpecificationThirdPass : sfp -> Domain.store
 
-(** an alias of function sfpSpecificationThirdPass **)
+(** default valuation function (3 passes) **)
 val sfpSpecification : sfp -> Domain.store
