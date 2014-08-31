@@ -41,7 +41,9 @@ let rec apply store _constraint =
 			if clauses = [] then true
 			else iter clauses
 		)
-	| _ -> error 701
+	| True -> true
+	| False -> false
+	| _ -> error 701 (* TODO: handle >,>=,<,<= *)
 
 (**
  * This function compiles a nested reference at the left-hand side of
@@ -187,7 +189,8 @@ and dnf_of _constraint variables typeEnvironment =
 		dnf_of_numeric r v variables typeEnvironment (fun x1 x2 -> x1 < x2)
 	| LessEqual (r, v) ->
 		dnf_of_numeric r v variables typeEnvironment (fun x1 x2 -> x1 <= x2)
-	| _ -> error 709
+	| True -> True
+	| False -> False
 
 and dnf_of_numeric r v variables typeEnvironment comparator =
 	let convert x =
@@ -440,8 +443,9 @@ let rec substitute_free_variables_of _constraint parameters =
 		)
 	| In (r, v) ->
 		let r1 = substitute_parameter_of_reference r parameters in
-		In (r1, v)	
-	| _ -> error 717
+		In (r1, v)
+	| True -> True
+	| False -> False
 ;;
 
 
