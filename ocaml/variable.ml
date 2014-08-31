@@ -205,7 +205,7 @@ let string_of_variables variables =
 
 (** a temporary type which is used to generate a collection of variables **)
 type temp_variables = {
-	map               : t MapRef.t;
+	_map               : t MapRef.t;
 	_list             : t list;
 	nextVariableIndex : int
 }
@@ -227,14 +227,14 @@ let make_ts typeEnvInit flatStoreInit typeEnvGoal flatStoreGoal typeValues =
 		| _, _ -> error 602  (* incompatible type between init & goal *)
 	in
 	let accumulator = {
-			map               = MapRef.add r_dummy dummy MapRef.empty;
+			_map              = MapRef.add r_dummy dummy MapRef.empty;
 			_list             = [dummy];
 			nextVariableIndex = 1
 		}
 	in
 	let result = MapRef.fold (
 			fun r v acc ->
-				if MapRef.mem r acc.map then error 603;
+				if MapRef.mem r acc._map then error 603;
 				match type_of_variable r with
 				| Syntax.TBasic Syntax.TAction
 				| Syntax.TBasic Syntax.TGlobal ->
@@ -247,7 +247,7 @@ let make_ts typeEnvInit flatStoreInit typeEnvGoal flatStoreGoal typeValues =
 						value value
 					in
 					{
-						map               = MapRef.add r variable acc.map;
+						_map              = MapRef.add r variable acc._map;
 						_list             = variable :: acc._list;
 						nextVariableIndex = acc.nextVariableIndex + 1
 					}
@@ -261,14 +261,14 @@ let make_ts typeEnvInit flatStoreInit typeEnvGoal flatStoreGoal typeValues =
 						goal
 					in
 					{
-						map               = MapRef.add r variable acc.map;
+						_map              = MapRef.add r variable acc._map;
 						_list             = variable :: acc._list;
 						nextVariableIndex = acc.nextVariableIndex + 1
 					}
 		) flatStoreInit accumulator
 	in
 	let variables = {
-			map = result.map;
+			map = result._map;
 			arr = (Array.of_list result._list)
 		}
 	in
