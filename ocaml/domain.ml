@@ -323,7 +323,7 @@ and json_of_value = function
 	| Global global -> json_of_constraint global
 	| Action action -> json_of_action action
 	| TBD           -> "\"§TBD\""
-	| Unknown       -> "\"§Unknown\""
+	| Unknown       -> "\"§unknown\""
 
 and json_of_basic = function
 	| Boolean b  -> string_of_bool b
@@ -418,7 +418,7 @@ and yaml_of_cell identifier value tab =
 		| Global global -> yaml_of_constraint global (tab ^ "  ")
 		| Action action -> yaml_of_action action (tab ^ "  ")
 		| TBD           -> "§TBD"
-		| Unknown       -> "§Unknown"
+		| Unknown       -> "§unknown"
 	in
 	_name ^ _value
 

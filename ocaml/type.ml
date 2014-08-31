@@ -421,7 +421,7 @@ let sfDataReference dr : environment -> reference -> _type =
 		| _, Type TTBD       ->
 			error 421 ("dereference of " ^ !^r ^ " is TBD")
 		| _, Type TUnknown   ->
-			error 421 ("dereference of " ^ !^r ^ " is Unknown")
+			error 421 ("dereference of " ^ !^r ^ " is unknown")
 		| _, Undefined       -> TForward (r, false)
 
 (* (Deref Link) *)

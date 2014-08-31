@@ -134,8 +134,8 @@ and string_of_type = function
 	| TForward (r, islink) -> "?(" ^ (if islink then "" else "*") ^
 	                              (String.concat "." r) ^ ")"
 	| TUndefined           -> "!"
-	| TTBD                 -> "?TBD"
-	| TUnknown             -> "?Unknown"
+	| TTBD                 -> "§TBD"
+	| TUnknown             -> "§unknown"
 
 and string_of_basic_type = function
 	| TBool               -> "bool"
