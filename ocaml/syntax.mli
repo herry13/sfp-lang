@@ -43,8 +43,7 @@ and _type     = TBasic of basicType
                    data-reference = (r, false) *)
               | TForward of reference * bool
               | TUndefined
-              | TTBD
-              | TUnknown
+              | TAny
 and basicType = TBool                         (* (Type Bool)   *)
               | TInt                          (* (Type Int)    *)
               | TFloat                        (* (Type Float)  *)

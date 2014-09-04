@@ -43,8 +43,7 @@ and _type     = TBasic   of basicType
                    data-reference = (r, false) *)
               | TForward of reference * bool
               | TUndefined
-              | TTBD
-              | TUnknown
+              | TAny
 and basicType = TBool                         (* (Type Bool)   *)
               | TInt                          (* (Type Int)    *)
               | TFloat                        (* (Type Float)  *)
@@ -134,8 +133,7 @@ and string_of_type = function
 	| TForward (r, islink) -> "?(" ^ (if islink then "" else "*") ^
 	                              (String.concat "." r) ^ ")"
 	| TUndefined           -> "!"
-	| TTBD                 -> "§TBD"
-	| TUnknown             -> "§unknown"
+	| TAny                 -> "any"
 
 and string_of_basic_type = function
 	| TBool               -> "bool"

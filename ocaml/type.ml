@@ -93,10 +93,8 @@ let rec (<:) type1 type2 =
 	if type1 = type2 then true (* (Reflex) *)
 	else
 		match type1, type2 with
-		| TTBD, _ when type2 <> TUndefined     -> true
-		                                          (* TODOC (TBD Subtype) *)
-		| TUnknown, _ when type2 <> TUndefined -> true
-		                                          (* TODOC (Unknown Subtype)*)
+		| TAny, _ when type2 <> TUndefined     -> true
+		                                          (* TODOC (Any Subtype) *)
 		| TBasic TInt, TBasic TFloat           -> true (* TODOC (IntFloat) *)
 		| TBasic (TSchema _), TBasic TObject   -> true (* (Object Subtype) *)
 		| TBasic (TSchema (sid1, super1)), _   -> TBasic super1 <: type2
@@ -118,8 +116,7 @@ let subtype type1 type2 = type1 <: type2 ;;
 let rec has_type typeEnv _type =
 	match _type with
 	| TUndefined                -> false (* _type is not defined *)
-	| TTBD                      -> true  (* TODOC (Type TBD) *)
-	| TUnknown                  -> true  (* TODOC (Type Unknown) *)
+	| TAny                      -> true  (* TODOC (Type Any) *)
 	| TForward (_, _)           -> true  (* TODOC (Type Forward) *)
 	| TVec t                    -> has_type typeEnv t    (* (Type Vec)    *)
 	| TRef t                    -> has_type typeEnv (TBasic t) (* (Type Ref) *)
@@ -191,12 +188,9 @@ let bind typeEnv reference _type =
  *)
 let assign typeEnv reference _type typeValue =
 	match (find typeEnv reference), _type, typeValue with
-	| Undefined, TUndefined, TTBD ->
+	| Undefined, TUndefined, TAny ->
 		error 405 (!^reference ^
-			" cannot assign TBD to an undefined variable")
-	| Undefined, TUndefined, TUnknown ->
-		error 405 (!^reference ^
-			" cannot assign Unknown to an undefined variable")
+			" cannot assign Any to an undefined variable")
 	| Undefined, TUndefined, _ ->  (* (Assign1) *)
 		bind typeEnv reference typeValue
 	| Undefined, _, _ when typeValue <: _type ->  (* (Assign3) *)
@@ -418,10 +412,8 @@ let sfDataReference dr : environment -> reference -> _type =
 			error 419 ("dereference of " ^ !^r ^ " is a vector")
 		| _, Type TUndefined ->
 			error 420 ("dereference of " ^ !^r ^ " is Undefined")
-		| _, Type TTBD       ->
-			error 421 ("dereference of " ^ !^r ^ " is TBD")
-		| _, Type TUnknown   ->
-			error 421 ("dereference of " ^ !^r ^ " is unknown")
+		| _, Type TAny       ->
+			error 421 ("dereference of " ^ !^r ^ " is Any")
 		| _, Undefined       -> TForward (r, false)
 
 (* (Deref Link) *)
@@ -517,8 +509,8 @@ and sfValue v : reference -> reference -> _type -> environment ->
 	 *)
 	fun ns r t e ->
 		match v with
-		| TBD -> assign e r t TTBD
-		| Unknown -> assign e r t TUnknown
+		| TBD -> assign e r t TAny
+		| Unknown -> assign e r t TAny
 		| Basic bv -> assign e r t (sfBasicValue bv e ns)
 		| Link link ->
 			(
