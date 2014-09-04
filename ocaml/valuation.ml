@@ -67,6 +67,7 @@ and sfValue v =
 		| Action a -> sfpAction a ns r s
 		| TBD      -> Domain.bind s r Domain.TBD
 		| Unknown  -> Domain.bind s r Domain.Unknown
+		| Nothing  -> Domain.bind s r Domain.Nothing
 
 (** the type is ignored since this function only evaluates the value **)
 and sfAssignment (reference, _, value) =

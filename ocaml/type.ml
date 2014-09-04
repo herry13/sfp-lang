@@ -511,6 +511,7 @@ and sfValue v : reference -> reference -> _type -> environment ->
 		match v with
 		| TBD -> assign e r t TAny
 		| Unknown -> assign e r t TAny
+		| Nothing -> assign e r t TAny
 		| Basic bv -> assign e r t (sfBasicValue bv e ns)
 		| Link link ->
 			(

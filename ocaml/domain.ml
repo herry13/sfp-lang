@@ -20,6 +20,7 @@ and value     = Basic of basic
               | Action of action
               | TBD
               | Unknown
+              | Nothing
 and _value    = Val of value
               | Undefined
 and cell      = ident * value
@@ -324,6 +325,7 @@ and json_of_value = function
 	| Action action -> json_of_action action
 	| TBD           -> "\"§TBD\""
 	| Unknown       -> "\"§unknown\""
+	| Nothing       -> "\"§nothing\""
 
 and json_of_basic = function
 	| Boolean b  -> string_of_bool b
@@ -419,6 +421,7 @@ and yaml_of_cell identifier value tab =
 		| Action action -> yaml_of_action action (tab ^ "  ")
 		| TBD           -> "§TBD"
 		| Unknown       -> "§unknown"
+		| Nothing       -> "§nothing"
 	in
 	_name ^ _value
 

@@ -17,6 +17,7 @@ and  value         = Basic     of basicValue
                    | Action    of action
                    | TBD
                    | Unknown
+                   | Nothing
 and  prototype     = ReferencePrototype of reference * prototype
                    | BlockPrototype     of block * prototype
                    | EmptyPrototype
@@ -99,6 +100,7 @@ and string_of_value = function
 	| Action a       -> string_of_action a
 	| TBD        -> " TBD"
 	| Unknown -> " Unknown"
+	| Nothing -> " Nothing"
 
 and string_of_proto = function
 	| ReferencePrototype (r, p) -> " extends " ^ (string_of_ref r) ^

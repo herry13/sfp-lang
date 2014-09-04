@@ -1,9 +1,5 @@
 (*
-  sflexer.mll - OCaml Lexer file (ocamllex)
   author: Herry (herry13@gmail.com)
-
-  changelog:
-  22.07.2014 - first released
 *)
 
 {
@@ -22,7 +18,7 @@
 
 	(* reserved words *)
 	let keywords = ["true"; "false"; "null"; "NULL"; "extends"; "DATA"; "TBD";
-	                "unknown";
+	                "unknown"; "nothing";
 	                "isa"; "schema"; "bool"; "int"; "float";
 	                "str"; "string"; "obj"; "object"; "include"; "import";
 	                "in"; "if"; "then"; "global"; "not";
@@ -59,6 +55,7 @@ let false_value      = "false"
 let null_value       = "null" | "NULL"
 let tbd_value        = "TBD"
 let unknown_value    = "unknown"
+let nothing_value    = "nothing"
 let extends          = "extends"
 let data_ref         = "DATA"
 let isa              = "isa"
@@ -113,6 +110,7 @@ rule token =
 	| null_value  { NULL }
 	| tbd_value   { TOK_TBD }
 	| unknown_value { TOK_UNKNOWN }
+	| nothing_value { TOK_NOTHING }
 	| extends     { EXTENDS }
 	| data_ref    { DATA }
 	| isa         { ISA }

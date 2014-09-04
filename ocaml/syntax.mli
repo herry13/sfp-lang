@@ -17,6 +17,7 @@ and  value         = Basic     of basicValue
                    | Action    of action
                    | TBD
                    | Unknown
+                   | Nothing
 and  prototype     = ReferencePrototype of reference * prototype
                    | BlockPrototype     of block * prototype
                    | EmptyPrototype
