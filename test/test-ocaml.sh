@@ -9,13 +9,17 @@ OPT_AST="-ast"
 BIN="$BASEDIR/../ocaml/csfp"
 EXT="sfp"
 
+red='\x1B[0;31m'
+green='\x1B[0;32m'
+nocolor='\x1B[0m'
+
 function test {
 	if [[ -f $1 && "${1##*.}" = $EXT ]]; then
 		result=$($BIN $2 $1 2>&1 1>/dev/null)
 		if [[ $result != "" ]]; then
-			echo "$1 [Failed]"
+			echo -e "$2 => $1 ${red}[Failed]${nocolor}"
 		else
-			echo "$1 [OK]"
+			echo -e "$2 => $1 ${green}[OK]${nocolor}"
 		fi
 	fi
 }
@@ -25,14 +29,16 @@ cd $BASEDIR
 echo "=== running tests ==="
 filelist="$BASEDIR/good-test-files.txt"
 for file in $(cat $filelist); do
-	# AST: -ast
-	test $file $OPT_AST
-	# type: -type
-	test $file $OPT_TYPE
-	# JSON: -json
-	test $file $OPT_JSON
-	# YAML: -yaml
-	test $file $OPT_YAML
+	if [ ${file:0:1} != "#" ]; then
+		# AST: -ast
+		test $file $OPT_AST
+		# type: -type
+		test $file $OPT_TYPE
+		# JSON: -json
+		test $file $OPT_JSON
+		# YAML: -yaml
+		test $file $OPT_YAML
+	fi
 done
 echo "=== done ==="
 
