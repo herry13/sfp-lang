@@ -152,9 +152,10 @@ disjunction
 	|                            { [] }
 
 sfp_constraint
-	: equal                                 { $1 }
-	| BEGIN conjunction END                 { And $2 }
+	: BEGIN conjunction END                 { And $2 }
 	| LPARENTHESIS disjunction RPARENTHESIS { Or $2 }
+	| equal                                 { $1 }
+	| equal_true                            { $1 }
 	| not_equal                             { $1 }
 	| negation                              { $1 }
 	| implication                           { $1 }
@@ -166,6 +167,9 @@ sfp_constraint
 
 equal
 	: reference EQUAL basic EOS { Eq ($1, $3) }
+
+equal_true
+	: reference EOS { Eq ($1, Boolean "true") }
 
 not_equal
 	: reference NOT_EQUAL basic EOS { Ne ($1, $3) }
