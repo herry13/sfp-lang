@@ -24,6 +24,7 @@ let fd_plan init goal =
 	let fd_preprocessor = "FD_PREPROCESS" in
 	let fd_search       = "FD_SEARCH" in
 	let fd_option       = "FD_OPTIONS" in
+	let fd_debug        = "FD_DEBUG" in
 	let sas_file        = "output.sas" in
 	let plan_file       = "sas_plan" in
 	let default_search_options = "--search \"lazy_greedy(ff())\"" in
@@ -35,6 +36,13 @@ let fd_plan init goal =
 				Sys.getenv fd_option
 			with
 				e -> default_search_options
+		in
+		let debug =
+			try
+				let _ = Sys.getenv fd_debug in
+				true
+			with
+				e -> false
 		in
 		if not (Sys.file_exists preprocessor) then (
 			prerr_string ("Error: " ^ preprocessor ^ " is not exist!\n\n");
@@ -75,19 +83,17 @@ let fd_plan init goal =
 			)
 			else "No solution!"
 		in
-		try
-			let _ = Sys.getenv "FD_DEBUG" in
+		if debug then
 			plan
-		with
-			e ->
-				try
-					Sys.remove sas_file;
-					Sys.remove "plan_numbers_and_cost";
-					Sys.remove "output";
-					Sys.remove plan_file;
-					plan
-				with
-					e -> plan
+		else
+			try
+				let files = [sas_file; "plan_numbers_and_cost"; "output";
+					plan_file]
+				in
+				List.iter(fun file -> Sys.remove file) files;
+				plan
+			with
+				e -> plan
 	with
 		Not_found ->
 			prerr_string ("Error: environment variable FD_PREPROCESS" ^
@@ -95,14 +101,55 @@ let fd_plan init goal =
 			exit 1
 ;;
 
-let usage_msg = "usage: csfp [options]\n\nwhere [options] are:";;
-let opt_init_file = ref "";;
-let opt_goal_file = ref "";;
+let usage_msg = "usage: csfp [options]\n\nwhere [options] are:" ;;
+let opt_ast = ref "" ;;
+let opt_type = ref "" ;;
+let opt_json = ref "" ;;
+let opt_yaml = ref "" ;;
+let opt_fs = ref "" ;;
+let opt_init_file = ref "" ;;
+let opt_goal_file = ref "" ;;
+let opt_fdr = ref false ;;
+let opt_fd = ref false ;;
 
 (**
  * main function
  *)
 let main =
+	let speclist = [
+			("-json", Arg.Set_string opt_json,
+				" Compile and print the result in JSON (default).");
+			("-yaml", Arg.Set_string opt_yaml,
+				" Compile and print the result in YAML.");
+			("-ast",  Arg.Set_string opt_ast,
+				"  Print abstract syntax tree.");
+			("-type", Arg.Set_string opt_type,
+				" Evaluate and print the element types.");
+			("-fs",   Arg.Set_string opt_fs,
+				"   Compile and print the flat store.");
+			("-init", Arg.Set_string opt_init_file,
+				" File specification of initial state.");
+			("-goal", Arg.Set_string opt_goal_file,
+				" File specification of goal state.");
+			("-fdr",  Arg.Set opt_fdr,
+				"  Generate and print Finite Domain Representation (FDR);" ^
+				"\n         " ^
+				"-init <file1.sfp> -goal <file2.sfp> must be provided.");
+			("-fd",   Arg.Set opt_fd,
+				"   Solve an SFP task. Options -init <init.sfp> -goal " ^
+				"<goal.sfp>" ^
+			 	"\n         " ^
+				"must be provided. Environment variable FD_PREPROCESS & " ^
+				"FD_SEARCH" ^
+			 	"\n         " ^
+				"must be set. Define FD_OPTIONS to pass options to the " ^
+				"search engine." ^
+			 	"\n         " ^
+				"Define FD_DEBUG to keep all output files.")
+		]
+	in
+	Arg.parse speclist print_endline usage_msg;
+
 	let do_compile = fun mode file ->
 		let store = Valuation.sfpSpecification (ast_of_file file) in
 		match mode with
@@ -111,14 +158,6 @@ let main =
 		| 3 -> let fs = Domain.normalise store in
 		       print_endline (Domain.string_of_flatstore fs)
 		| _ -> print_endline usage_msg
-	in
-	let do_ast =
-		fun file -> print_endline (Syntax.string_of_sfp (ast_of_file file))
-	in
-	let do_type =
-		fun file ->
-			print_endline (Type.string_of_map
-				(Type.sfpSpecification (ast_of_file file)))
 	in
 	let verify_files () =
 		if !opt_init_file = "" then (
@@ -129,51 +168,29 @@ let main =
 			print_endline "Error: -goal <file.sfp> is not set";
 			exit 1
 		);
-	in
-	let do_fdr = fun () ->
+	in	
+	if !opt_json <> "" then do_compile 1 !opt_json;
+	if !opt_yaml <> "" then do_compile 2 !opt_yaml;
+	if !opt_fs <> "" then do_compile 3 !opt_fs;
+	if !opt_ast <> "" then
+		print_endline (Syntax.string_of_sfp (ast_of_file !opt_ast));
+	if !opt_type <> "" then
+		print_endline (Type.string_of_map
+			(Type.sfpSpecification (ast_of_file !opt_type))
+		);
+	if !opt_fdr then (
 		verify_files();
-		let fdr =
-			Fdr.of_sfp (ast_of_file !opt_init_file)
-				(ast_of_file !opt_goal_file)
+		let fdr = Fdr.of_sfp (ast_of_file !opt_init_file) (ast_of_file
+			!opt_goal_file)
 		in
 		print_endline (Fdr.string_of fdr)
-	in
-	let do_fd = fun mode ->
+	);
+	if !opt_fd then (
 		verify_files();
 		print_endline (fd_plan !opt_init_file !opt_goal_file)
-	in
-	let speclist = [
-			("-json", Arg.String (do_compile 1),
-				" Compile and print the result in JSON (default).");
-			("-yaml", Arg.String (do_compile 2),
-				" Compile and print the result in YAML.");
-			("-ast",  Arg.String do_ast,
-				"  Print abstract syntax tree.");
-			("-type", Arg.String do_type,
-				" Evaluate and print the element types.");
-			("-fs",   Arg.String (do_compile 3),
-				"   Compile and print the flat store.");
-			("-init", Arg.Set_string opt_init_file,
-				" File specification of initial state.");
-			("-goal", Arg.Set_string opt_goal_file,
-				" File specification of goal state.");
-			("-fdr",  Arg.Unit do_fdr,
-				"  Generate and print Finite Domain Representation (FDR);" ^
-				"\n         " ^
-				"-init <file1.sfp> -goal <file2.sfp> must be provided.");
-			("-fd",   Arg.Unit do_fd,
-				"   Solve the SFP task using FastDownward search engine;" ^
-			 	"\n         " ^
-				"-init <file1.sfp> -goal <file2.sfp> must be provided;" ^
-			 	"\n         " ^
-				"environment variable FD_PREPROCESS & FD_SEARCH must be set;" ^
-			 	"\n         " ^
-				"define FD_OPTIONS to pass options to the search engine;" ^
-			 	"\n         " ^
-				"define FD_DEBUG to keep all output files.")
-		]
-	in
-	Arg.parse speclist print_endline usage_msg;
-	if (Array.length Sys.argv) < 2 then Arg.usage speclist usage_msg;;
+	);
+	
+	if (Array.length Sys.argv) < 2 then Arg.usage speclist usage_msg
+;;
 
-let _ = main
+let _ = main ;;
