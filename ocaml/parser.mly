@@ -1,8 +1,8 @@
 /**
- * sfparser.ml - OCaml Yacc file (ocamlyacc)
+ * parser.ml
  * author: Herry (herry13@gmail.com)
  *
- * This is a parser to generate an abstract syntax tree from a concrete
+ * This is a parser which generates an abstract syntax tree from a concrete
  * syntax tree.
  */
 

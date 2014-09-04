@@ -1,7 +1,4 @@
-(*
-  csf.ml - main file
-  author: Herry (herry13@gmail.com)
-*)
+(* author: Herry (herry13@gmail.com) *)
 
 open Array
 
