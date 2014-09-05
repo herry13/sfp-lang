@@ -2,6 +2,19 @@ open Common
 open Domain
 
 let rec apply store _constraint =
+	let numeric_compare num1 num2 comparator =
+		match num1, num2 with
+		| Val (Basic (Int int1)), Int int2 ->
+			comparator (float_of_int int1) (float_of_int int2)
+		| Val (Basic (Int int1)), Float float2 ->
+			comparator (float_of_int int1) float2
+		| Val (Basic (Float float1)), Int int2 ->
+			comparator float1 (float_of_int int2)
+		| Val (Basic (Float float1)), Float float2 ->
+			comparator float1 float2
+		| _ ->
+			false
+	in
 	match _constraint with
 	| Eq (r, v) -> (
 			match (find_follow store r), v with
@@ -17,6 +30,10 @@ let rec apply store _constraint =
 			| Val (Basic v1), _ -> v <> v1
 			| _ -> false
 		)
+	| Greater (r, v) -> numeric_compare (find_follow store r) v (>)
+	| GreaterEqual (r, v) -> numeric_compare (find_follow store r) v (>=)
+	| Less (r, v) -> numeric_compare (find_follow store r) v (<)
+	| LessEqual (r, v) -> numeric_compare (find_follow store r) v (<=)
 	| Not c1 -> not (apply store c1)
 	| Imply (c1, c2) -> not (apply store c1) || (apply store c2)
 	| In (r, vec) -> (
@@ -53,7 +70,7 @@ let rec apply store _constraint =
 		)
 	| True -> true
 	| False -> false
-	| _ -> error 701 (* TODO: handle >,>=,<,<= *)
+;;
 
 (**
  * This function compiles a nested reference at the left-hand side of
