@@ -141,6 +141,27 @@ let rec find store reference : _value =
 		else find tail reference
 ;;
 
+(**
+ * TODOC
+ * unlike 'find', function 'find_follow' can resolve a nested reference
+ *)
+let find_follow store reference : _value =
+	let rec search s r : _value =
+		match (s, r) with
+		| _, [] -> Val (Store s)
+		| [], _ -> Undefined
+		| (ids, vs) :: tail, id :: rs ->
+			if ids = id then
+				if rs = [] then Val vs
+				else
+					match vs with
+					| Store child -> search child rs
+					| Basic (Ref r) -> search store (r @++ rs)
+					| _ -> Undefined
+			else search tail r
+	in
+	search store reference
+
 let rec resolve store baseReference reference =
 	match reference with
 	| "ROOT" :: rs   -> ([], find store !!rs)
