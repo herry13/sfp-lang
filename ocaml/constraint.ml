@@ -4,20 +4,30 @@ open Domain
 let rec apply store _constraint =
 	match _constraint with
 	| Eq (r, v) -> (
-			match find_follow store r with
-			| Val (Basic v1) -> v = v1
+			match (find_follow store r), v with
+			| Val (Basic (Int i)), Float f
+			| Val (Basic (Float f)), Int i -> (float_of_int i) = f
+			| Val (Basic v1), _ -> v = v1
 			| _ -> false
 		)
 	| Ne (r, v) -> (
-			match find_follow store r with
-			| Val (Basic v1) -> v <> v1
+			match (find_follow store r), v with
+			| Val (Basic (Int i)), Float f
+			| Val (Basic (Float f)), Int i -> (float_of_int i) <> f
+			| Val (Basic v1), _ -> v <> v1
 			| _ -> false
 		)
 	| Not c1 -> not (apply store c1)
 	| Imply (c1, c2) -> not (apply store c1) || (apply store c2)
 	| In (r, vec) -> (
 			match find_follow store r with
-			| Val (Basic v1) -> List.mem v1 vec
+			| Val (Basic v1) ->
+				List.exists (fun v ->
+					match v, v1 with
+					| Int i, Float f
+					| Float f, Int i -> (float_of_int i) = f
+					| _ -> v = v1
+				) vec
 			| _ -> false
 		)
 	| And clauses -> (
