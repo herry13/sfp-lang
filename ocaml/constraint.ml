@@ -4,19 +4,19 @@ open Domain
 let rec apply store _constraint =
 	match _constraint with
 	| Eq (r, v) -> (
-			match find store r with
+			match find_follow store r with
 			| Val (Basic v1) -> v = v1
 			| _ -> false
 		)
 	| Ne (r, v) -> (
-			match find store r with
+			match find_follow store r with
 			| Val (Basic v1) -> v <> v1
 			| _ -> false
 		)
 	| Not c1 -> not (apply store c1)
 	| Imply (c1, c2) -> not (apply store c1) || (apply store c2)
 	| In (r, vec) -> (
-			match find store r with
+			match find_follow store r with
 			| Val (Basic v1) -> List.mem v1 vec
 			| _ -> false
 		)
