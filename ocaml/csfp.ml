@@ -111,6 +111,7 @@ let opt_init_file = ref "" ;;
 let opt_goal_file = ref "" ;;
 let opt_fdr = ref false ;;
 let opt_fd = ref false ;;
+let opt_apply_global = ref "" ;;
 
 (**
  * main function
@@ -145,7 +146,9 @@ let main =
 				"must be set. Define FD_OPTIONS to pass options to the " ^
 				"search engine." ^
 			 	"\n         " ^
-				"Define FD_DEBUG to keep all output files.")
+				"Define FD_DEBUG to keep all output files.");
+			("-g", Arg.Set_string opt_apply_global,
+				"    Check if the specification satisfies the global constraints.")
 		]
 	in
 	Arg.parse speclist print_endline usage_msg;
@@ -188,6 +191,16 @@ let main =
 	if !opt_fd then (
 		verify_files();
 		print_endline (fd_plan !opt_init_file !opt_goal_file)
+	);
+	if !opt_apply_global <> "" then (
+		let store =
+			Valuation.sfpSpecification (ast_of_file !opt_apply_global)
+		in
+		match Domain.find store ["global"] with
+		| Domain.Val (Domain.Global gc) when Constraint.apply store gc ->
+			print_endline "global constraints are satisfied"
+		| _ ->
+			prerr_endline "global constraints are not satisfied"
 	);
 	
 	if (Array.length Sys.argv) < 2 then Arg.usage speclist usage_msg
