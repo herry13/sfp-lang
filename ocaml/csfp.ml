@@ -197,6 +197,8 @@ let main =
 			Valuation.sfpSpecification (ast_of_file !opt_apply_global)
 		in
 		match Domain.find store ["global"] with
+		| Domain.Undefined ->
+			print_endline "global constraints are satisfied"
 		| Domain.Val (Domain.Global gc) when Constraint.apply store gc ->
 			print_endline "global constraints are satisfied"
 		| _ ->
