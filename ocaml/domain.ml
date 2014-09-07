@@ -108,13 +108,13 @@ let (@<) reference1 reference2 = ref_prefix_ref reference1 reference2 ;;
 
 let rec trace baseReference reference =
 	match reference with
-	| []             -> baseReference
-	| "THIS" :: rs   -> trace baseReference rs
-	| "ROOT" :: rs   -> trace [] rs
-	| "PARENT" :: rs ->
+	| [] -> baseReference
+	| "this" :: rs -> trace baseReference rs
+	| "root" :: rs -> trace [] rs
+	| "parent" :: rs ->
 		if baseReference = [] then error 501
 		else trace (prefix baseReference) rs
-	| id :: rs       -> trace (baseReference @+. id) rs
+	| id :: rs -> trace (baseReference @+. id) rs
 ;;
 
 let (@<<) baseReference reference = trace baseReference reference ;;
@@ -163,14 +163,14 @@ let find_follow store reference : _value =
 
 let rec resolve store baseReference reference =
 	match reference with
-	| "ROOT" :: rs   -> ([], find store !!rs)
-	| "PARENT" :: rs ->
+	| "root" :: rs   -> ([], find store !!rs)
+	| "parent" :: rs ->
 		if baseReference = [] then error 502
 		else (
 			prefix baseReference,
 			find store !!((prefix baseReference) @++ rs)
 		)
-	| "THIS" :: rs   -> (baseReference, find store !!(baseReference @++ rs))
+	| "this" :: rs   -> (baseReference, find store !!(baseReference @++ rs))
 	| _              ->
 		if baseReference = [] then ([], find store !!reference)
 		else
@@ -181,16 +181,25 @@ let rec resolve store baseReference reference =
 ;;
 
 let rec get_link store baseReference reference linkReference accumulator =
-	if SetRef.exists (fun r -> r = linkReference) accumulator then error 503
-	else 
-		match (resolve store baseReference linkReference) with
+	let (baseRef, ref) =
+		match linkReference with
+		| "root" :: rs -> ([], rs)
+		| "parent" :: rs ->
+			if baseReference = [] then error 515
+			else ([], (prefix baseReference) @++ rs)
+		| "this" :: rs -> ([], baseReference @++ rs)
+		| _ -> (baseReference, linkReference)
+	in
+	if SetRef.exists (fun r -> r = ref) accumulator then error 503
+	else
+		match (resolve store baseRef ref) with
 		| nsp, value -> (
-				let r = nsp @++ linkReference in
+				let r = nsp @++ ref in
 				match value with
 				| Val (Link lr) -> get_link store (prefix r) reference lr
-				                   (SetRef.add r accumulator)
-				| _             -> if r @<= reference then error 504
-				                   else (r, value)
+				                       (SetRef.add r accumulator)
+				| _ -> if r @<= reference then error 504
+				       else (r, value)
 			)
 ;;
 

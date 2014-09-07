@@ -243,14 +243,14 @@ let rec env_of_ref typeEnv reference cut =
  *)
 let rec resolve typeEnv baseReference reference =
 	match baseReference, reference with
-	| _, "ROOT"   :: rs -> ([], find typeEnv !!rs)
-	| _, "PARENT" :: rs ->
+	| _, "root"   :: rs -> ([], find typeEnv !!rs)
+	| _, "parent" :: rs ->
 		if baseReference = []
 			then error 409 "PARENT of root namespace is impossible"
 		else
 			(prefix baseReference,
 				find typeEnv !!((prefix baseReference) @++ rs))
-	| _, "THIS"   :: rs ->
+	| _, "this"   :: rs ->
 		(baseReference, find typeEnv !!(baseReference @++ rs))
 	| [], _ -> ([], find typeEnv reference)
 	| _, _ ->
@@ -258,7 +258,7 @@ let rec resolve typeEnv baseReference reference =
 		| Undefined -> resolve typeEnv (prefix baseReference) reference
 		| _type     -> (baseReference, _type)
 ;;
-	
+
 (**
  * TODOC
  * @param typeEnv      type environment
@@ -307,17 +307,29 @@ let rec resolve_forward_type typeEnv baseReference reference accumulator =
 		else
 			resolve_forward_type typeEnv r refType (SetRef.add r accumulator)
 	in
-	if SetRef.exists (fun r -> r = reference) accumulator
+	let (baseRef, ref) =
+		match reference with
+		| "root" :: rs -> ([], rs)
+		| "parent" :: rs ->
+			if baseReference = [] then
+				error 433 ("invalid reference: " ^ !^reference)
+			else
+				([], (prefix baseReference) @++ rs)
+		| "this" :: rs -> ([], baseReference @++ rs)
+		| _ -> (baseReference, reference)
+	in
+	print_endline (!^reference ^ " -- " ^ !^ref);
+	if SetRef.exists (fun r -> r = ref) accumulator
 		then error 413 ("cyclic reference " ^ !^reference)
 	else
-		match resolve typeEnv baseReference reference with
+		match resolve typeEnv baseRef ref with
 		| _, Undefined ->
 			error 414 ("undefined reference " ^ !^reference ^ " in " ^
 				!^baseReference)
-		| baseRef, Type TForward (refType, _) ->
-			follow_forward_type baseRef refType
-		| baseRef, Type _type ->
-			(baseRef @++ reference, _type)
+		| baseRef1, Type TForward (refType1, _) ->
+			follow_forward_type baseRef1 refType1
+		| baseRef1, Type _type ->
+			(baseRef1 @++ ref, _type)
 ;;
 
 (**
