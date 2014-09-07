@@ -6,6 +6,7 @@ OPT_TYPE="-type"
 OPT_JSON="-json"
 OPT_YAML="-yaml"
 OPT_AST="-ast"
+OPT_AST_JSON="-ast-json"
 BIN="$BASEDIR/../ocaml/csfp"
 EXT="sfp"
 
@@ -24,6 +25,19 @@ function test {
 	fi
 }
 
+function test_ast_json {
+	if [[ -f $1 && "${1##*.}" == $EXT ]]; then
+		result=$($BIN $OPT_AST_JSON $1 | \
+			ruby -e "require 'json'; puts (JSON.pretty_generate JSON.parse(STDIN.read))" \
+			2>&1 1>/dev/null)
+		if [[ $result != "" ]]; then
+			echo -e "$OPT_AST_JSON => $1 ${red}[Failed]${nocolor}"
+		else
+			echo -e "$OPT_AST_JSON => $1 ${green}[OK]${nocolor}"
+		fi
+	fi
+}
+
 cd $BASEDIR
 
 echo "=== running tests ==="
@@ -32,6 +46,8 @@ for file in $(cat $filelist); do
 	if [ ${file:0:1} != "#" ]; then
 		# AST: -ast
 		test $file $OPT_AST
+		# AST: -ast-json
+		test_ast_json $file
 		# type: -type
 		test $file $OPT_TYPE
 		# JSON: -json

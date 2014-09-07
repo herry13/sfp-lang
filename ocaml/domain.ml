@@ -1,5 +1,4 @@
 open Common
-open Yojson.Basic
 
 (*******************************************************************
  * semantics primary and secondary domains
@@ -321,7 +320,7 @@ let rec from_json store =
 		| `List vec   -> Basic (Vector (make_vector [] vec))
 		| `Assoc s    -> Store (make_store [] s)
 	in
-	sfp_of (from_string store)
+	sfp_of (Yojson.Basic.from_string store)
 ;;
 
 

@@ -103,6 +103,7 @@ let fd_plan init goal =
 
 let usage_msg = "usage: csfp [options]\n\nwhere [options] are:" ;;
 let opt_ast = ref "" ;;
+let opt_ast_json = ref "" ;;
 let opt_type = ref "" ;;
 let opt_json = ref "" ;;
 let opt_yaml = ref "" ;;
@@ -124,6 +125,8 @@ let main =
 				" Compile and print the result in YAML.");
 			("-ast",  Arg.Set_string opt_ast,
 				"  Print abstract syntax tree.");
+			("-ast-json", Arg.Set_string opt_ast_json,
+				"Print the JSON of the abstract syntax tree.");
 			("-type", Arg.Set_string opt_type,
 				" Evaluate and print the element types.");
 			("-fs",   Arg.Set_string opt_fs,
@@ -175,8 +178,12 @@ let main =
 	if !opt_json <> "" then do_compile 1 !opt_json;
 	if !opt_yaml <> "" then do_compile 2 !opt_yaml;
 	if !opt_fs <> "" then do_compile 3 !opt_fs;
-	if !opt_ast <> "" then
-		print_endline (Syntax.string_of_sfp (ast_of_file !opt_ast));
+	if !opt_ast <> "" then (
+		print_endline (Syntax.string_of_sfp (ast_of_file !opt_ast))
+	);
+	if !opt_ast_json <> "" then (
+		print_endline (Syntax.json_of_sfp (ast_of_file !opt_ast_json))
+	);
 	if !opt_type <> "" then
 		print_endline (Type.string_of_map
 			(Type.sfpSpecification (ast_of_file !opt_type))

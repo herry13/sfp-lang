@@ -27,6 +27,10 @@ opam init
 opam install ${OPAM_DEPENDS}
 eval `opam config env`
 
+# install Ruby to test JSON
+sudo apt-get install -qq ruby rubygems
+sudo gem install json
+
 # build csfp
 cd ocaml
 make
