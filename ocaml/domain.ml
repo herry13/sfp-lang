@@ -351,101 +351,29 @@ let rec from_json store =
 
 
 (*******************************************************************
- * convert the semantics domains to JSON
- *******************************************************************)
-
-let rec json_of_store store = "{" ^ (json_of_store1 store) ^ "}"
-
-and json_of_store1 = function
-	| []                -> ""
-	| (ids, vs) :: []   -> json_of_cell ids vs
-	| (ids, vs) :: tail -> (json_of_cell ids vs) ^ "," ^ json_of_store1 tail
-
-and json_of_cell id v = "\"" ^ id ^ "\":" ^ (json_of_value v)
-
-and json_of_value = function
-	| Link lr       -> "\"link " ^ !^lr ^ "\""
-	| Basic basic   -> json_of_basic basic
-	| Store child   -> "{" ^ json_of_store1 child ^ "}"
-	| Global global -> json_of_constraint global
-	| Action action -> json_of_action action
-	| TBD           -> "\"§TBD\""
-	| Unknown       -> "\"§unknown\""
-	| Nothing       -> "\"§nothing\""
-
-and json_of_basic = function
-	| Boolean b  -> string_of_bool b
-	| Int i      -> string_of_int i
-	| Float f    -> string_of_float f
-	| String s   ->  "\"" ^ s ^ "\""
-	| Null       -> "null"
-	| Vector vec -> "[" ^ (json_of_vec vec) ^ "]"
-	| Ref r      -> "\"" ^ !^r ^ "\""
-
-and json_of_vec = function
-	| []           -> ""
-	| head :: tail ->
-		let h = json_of_basic head in
-		if tail = [] then h else h ^ "," ^ (json_of_vec tail)
-
-(** convert a constraint to JSON **)
-and json_of_constraint = function
-	| Eq (r, bv) -> "[\"=\",\"" ^ !^r ^ "\"," ^ (json_of_basic bv) ^ "]"
-	| Ne (r, bv) -> "[\"!=\",\"" ^ !^r ^ "\"," ^ (json_of_basic bv) ^ "]"
-	| Greater (r, bv) -> "[\">\",\"" ^ !^r ^ "\"," ^ (json_of_basic bv) ^ "]"
-	| GreaterEqual (r, bv) ->
-		"[\">=\",\"" ^ !^r ^ "\"," ^ (json_of_basic bv) ^ "]"
-	| Less (r, bv) -> "[\"<\",\"" ^ !^r ^ "\"," ^ (json_of_basic bv) ^ "]"
-	| LessEqual (r, bv) ->
-		"[\"<=\",\"" ^ !^r ^ "\"," ^ (json_of_basic bv) ^ "]"
-	| Not c -> "[\"not\"," ^ (json_of_constraint c) ^ "]"
-	| Imply (c1, c2)  ->
-		"[\"imply\"," ^ (json_of_constraint c1) ^ "," ^
-			(json_of_constraint c2) ^ "]"
-	| And cs          ->
-		(List.fold_left (
-			fun s c -> s ^ "," ^ (json_of_constraint c)
-		) "[\"and\"" cs) ^ "]"
-	| Or cs           ->
-		(List.fold_left (
-			fun s c -> s ^ "," ^ (json_of_constraint c)
-		) "[\"or\"" cs) ^ "]"
-	| In (r, vec)     -> "[\"in\",\"" ^ !^r ^ "\",[" ^ (json_of_vec vec) ^ "]]"
-	| True            -> "true"
-	| False           -> "false"
-	
-
-(** convert an action to JSON **)
-and json_of_effect (r, bv) =
-	"[\"=\",\"" ^ !^r ^ "\"," ^ (json_of_basic bv) ^ "]"
-
-and json_of_effects effs =
-	(List.fold_left (
-		fun acc e -> acc ^ "," ^ (json_of_effect e)
-	) "[\"effects\"" effs) ^ "]"
-
-and json_of_conditions cond =
-	"[\"conditions\"," ^ (json_of_constraint cond) ^ "]"
-
-and json_of_cost cost = "[\"cost\"," ^ (string_of_int cost) ^ "]"
-
-and json_of_parameter (id, t) =
-	"[\"" ^ id ^ "\",\"" ^ (Syntax.string_of_type t) ^ "\"]"
-
-and json_of_parameters params =
-	(List.fold_left (
-		fun acc p -> acc ^ "," ^ (json_of_parameter p)
-	) "[\"parameters\"" params) ^ "]"
-
-and json_of_action (name, params, cost, conds, effs) =
-	"[\"" ^ !^name ^ "\"," ^ (json_of_parameters params) ^ "," ^
-	(json_of_conditions conds) ^ "," ^ (json_of_effects effs) ^ "]"
-;;
-
-
-(*******************************************************************
  * convert the semantics domain to YAML
  *******************************************************************)
+(* let yaml_of_store store =
+	let buf = Buffer.create 42 in
+	let yaml_store s tab = match s with
+		| [] -> Buffer.add_string buf "{}"
+		| (id, v) :: [] -> yaml_cell id v tab
+		| (id, v) :: tail -> (
+				yaml_cell id v tab;
+				Buffer.add_char buf '\n';
+				yaml_store tail tab
+			)
+	and yaml_cell id v tab =
+		Buffer.add_string buf tab;
+		Buffer.add_string buf id;
+		Buffer.add_string buf ": ";
+		match v with
+		| Link lr -> 
+*)
+
+(* let yaml_of_store store = "" (* TODO *) *)
+
+(*
 let rec yaml_of_store store = yaml_of_store1 store ""
 
 and yaml_of_store1 store tab =
@@ -513,7 +441,7 @@ and yaml_of_effects effs tab =
 
 and yaml_of_effect (r, bv) tab = tab ^ !^r ^ ": " ^ (json_of_basic bv)
 ;;
-
+*)
 
 (*******************************************************************
  * Flat-Store domain
@@ -543,12 +471,6 @@ let normalise store =
 	visit store [] MapRef.empty
 ;;
 
-let string_of_flatstore flatstore =
-	MapRef.fold (
-		fun r v acc -> acc ^ !^r ^ ": " ^ (json_of_value v) ^ "\n"
-	) flatstore ""
-;;
-
 
 (*******************************************************************
  * set of values
@@ -560,12 +482,6 @@ module SetValue = Set.Make (
 		let compare = Pervasives.compare
 	end
 )
-
-let string_of_setvalue setValue =
-	SetValue.fold (
-		fun v s -> s ^ (json_of_value v) ^ ";"
-	) setValue ""
-;;
 
 
 (*******************************************************************

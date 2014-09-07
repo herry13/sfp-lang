@@ -32,6 +32,7 @@ BYTECODELIB= \
 	parser_helper.cmo \
 	domain.cmo \
 	type.cmo \
+	json.cmo \
 	variable.cmo \
 	constraint.cmo \
 	action.cmo \
@@ -50,6 +51,7 @@ NATIVELIB= \
 	parser_helper.cmx \
 	domain.cmx \
 	type.cmx \
+	json.cmx \
 	variable.cmx \
 	constraint.cmx \
 	action.cmx \
@@ -85,6 +87,10 @@ lexer: lexer.mll parser
 parser_helper: parser_helper.ml parser lexer
 	$(COMPILER) -c parser_helper.ml
 
+json: domain type json.mli json.ml
+	$(COMPILER) -c json.mli
+	$(COMPILER) -c json.ml
+
 domain: common syntax domain.mli domain.ml
 	$(COMPILER) -c domain.mli
 	$(COMPILER) -c domain.ml
@@ -93,7 +99,7 @@ valuation: valuation.mli valuation.ml domain
 	$(COMPILER) -c valuation.mli
 	$(COMPILER) -c valuation.ml
 
-type: type.ml
+type: domain type.mli type.ml
 	$(COMPILER) -c type.mli
 	$(COMPILER) -c type.ml
 
@@ -101,7 +107,7 @@ common: common.mli common.ml
 	$(COMPILER) -c common.mli
 	$(COMPILER) -c common.ml
 
-variable: variable.mli variable.ml common domain type
+variable: variable.mli variable.ml common domain type json
 	$(COMPILER) -c variable.mli
 	$(COMPILER) -c variable.ml
 
@@ -113,7 +119,7 @@ action: common domain type variable constraint action.mli action.ml
 	$(COMPILER) -c action.mli
 	$(COMPILER) -c action.ml
 
-fdr: common domain type variable constraint action plan fdr.mli fdr.ml
+fdr: common domain type json variable constraint action plan fdr.mli fdr.ml
 	$(COMPILER) -c fdr.mli
 	$(COMPILER) -c fdr.ml
 

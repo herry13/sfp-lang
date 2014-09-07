@@ -107,13 +107,7 @@ val value_TBD_exists : store -> bool
 
 val (!^) : reference -> string
 
-val yaml_of_store : store -> string
-
-val json_of_store : store -> string
-
-val json_of_value : value -> string
-
-val json_of_constraint : _constraint -> string
+(* val yaml_of_store : store -> string *)
 
 val from_json : string -> value
 
@@ -127,16 +121,12 @@ val static_object : value
 
 val normalise : store -> flatstore
 
-val string_of_flatstore : flatstore -> string
-
 
 (*******************************************************************
  * set of values
  *******************************************************************)
 
 module SetValue : Set.S with type elt = value
-
-val string_of_setvalue : SetValue.t -> string
 
 
 (*******************************************************************

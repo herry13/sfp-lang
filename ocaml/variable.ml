@@ -36,14 +36,14 @@ let iteri_values func var = Array.iteri func var.values ;;
 
 let string_of_values =
 	Array.fold_left (
-		fun acc v -> acc ^ (json_of_value v) ^ ";"
+		fun acc v -> acc ^ (Json.of_value v) ^ ";"
 	) ""
 ;;
 
 let string_of_variable var =
 	!^(var.name) ^ "|" ^ string_of_int(var.index) ^ "|" ^
-	(string_of_values var.values) ^ "|" ^ (json_of_value var.init) ^ "|" ^
-	(json_of_value var.goal)
+	(string_of_values var.values) ^ "|" ^ (Json.of_value var.init) ^ "|" ^
+	(Json.of_value var.goal)
 ;;
 
 let r_dummy = ["!global"] ;;

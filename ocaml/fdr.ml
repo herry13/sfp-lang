@@ -42,7 +42,7 @@ let of_variables buffer variables =
 			Buffer.add_string buffer "Atom (";
 			Buffer.add_string buffer !^(Variable.name var);
 			Buffer.add_char buffer ' ';
-			Buffer.add_string buffer (json_of_value v);
+			Buffer.add_string buffer (Json.of_value v);
 			Buffer.add_string buffer ")\n";
 		) var;
 		Buffer.add_string buffer "end_variable"

@@ -4,7 +4,7 @@ open Common
 open Domain
 
 (**
- * This module represents a grounded SFP action.
+ * This module represents a grounded action.
  *)
 
 (** type of an action **)
@@ -69,7 +69,7 @@ let json_of_parameters buffer parameters =
 		Buffer.add_char buffer '"';
 		Buffer.add_string buffer id;
 		Buffer.add_string buffer "\":";
-		Buffer.add_string buffer (json_of_value (Basic v));
+		Buffer.add_string buffer (Json.of_value (Basic v));
 		first := 0
 	) parameters;
 	Buffer.add_char buffer '}'
@@ -83,7 +83,7 @@ let json_of_preconditions buffer preconditions =
 		Buffer.add_char buffer '"';
 		Buffer.add_string buffer !^r;
 		Buffer.add_string buffer "\":";
-		Buffer.add_string buffer (json_of_value (Basic v));
+		Buffer.add_string buffer (Json.of_value (Basic v));
 		first := 0
 	) preconditions;
 	Buffer.add_char buffer '}'

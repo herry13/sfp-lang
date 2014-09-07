@@ -11,3 +11,5 @@ These are the error codes used in every module:
 10xx - helper.ml
 11xx - valuation.ml
 12xx - plan.ml
+13xx - json.ml
+14xx - yaml.ml
