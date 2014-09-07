@@ -155,4 +155,4 @@ Note that environment variable `FD_PREPROCESS` and `FD_SEARCH` must be set befor
 
 License
 -------
-[Apache License version 2.0](https://raw.githubusercontent.com/herry13/smartfrog-lang/sfp/LICENSE)
+[Apache License version 2.0](LICENSE)
