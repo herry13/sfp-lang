@@ -232,7 +232,8 @@ and string_of_action (params, cost, conds, effs) =
 	    (string_of_conditions conds) ^ " " ^ (string_of_effects effs) ^ ")"
 ;;
 
-let json_of_sfp ?buffer:(buf = Buffer.create 42) (sfp : sfp) =
+let json_of_sfp sfp =
+	let buf = Buffer.create 42 in
 	let rec json_of_basic_type t = match t with
 		| TBool -> Buffer.add_string buf "\"bool\""
 		| TInt -> Buffer.add_string buf "\"int\""

@@ -86,6 +86,6 @@ val string_of_sfp : sfp -> string
 
 val string_of_type : _type -> string
 
-val json_of_sfp : ?buffer:Buffer.t -> sfp -> string
+val json_of_sfp : sfp -> string
 
 val sfp_of_json : string -> sfp
