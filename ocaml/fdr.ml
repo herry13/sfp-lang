@@ -53,7 +53,7 @@ let of_init buffer variables =
 		let i = Variable.index_of_value (Variable.init var) var in
 		(* initial state is not satisfying the global constraint *)
 		if i < 0
-			then error 901
+			then error 901 "initial state is not satisfying the global constraints"
 		else
 			Buffer.add_char buffer '\n';
 			Buffer.add_string buffer (string_of_int i)
@@ -74,7 +74,7 @@ let of_goal buffer variables useDummy =
 		let goal = Variable.goal var in
 		let i = Variable.index_of_value goal var in
 		if i < 0 (* goal state is not satisfying the global constraint *)
-			then error 902
+			then error 902 "goal state is not satisfying the global constraints"
 		else if (Variable.size var) > 1 &&
 				((Variable.index var) > 0 || useDummy) && goal <> TBD
 			then (

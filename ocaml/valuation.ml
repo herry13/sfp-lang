@@ -23,7 +23,7 @@ let sfDataReference dataRef = Domain.Ref (sfReference dataRef) ;;
 let sfLinkReference link =
 	let linkRef = sfReference link in
 	fun r ->
-		if Domain.(@<=) linkRef r then Domain.error 1101
+		if Domain.(@<=) linkRef r then Domain.error 1101 ""
 		else Domain.Link linkRef
 ;;
 
@@ -110,22 +110,22 @@ and sfpSpecificationSecondPass sfp =
 		match Domain.find s1 referenceMain with
 		| Domain.Val (Domain.Store main1) ->
 			Domain.accept s1 referenceMain main1 referenceMain
-		| _ -> Domain.error 1102
+		| _ -> Domain.error 1102 ""
 	in
 	let add_global s =
 		match Domain.find s1 referenceGlobal with
 		| Domain.Undefined -> s
 		| Domain.Val (Domain.Global global) ->
 			Domain.bind s referenceGlobal (Domain.Global global)
-		| _ -> Domain.error 1103
+		| _ -> Domain.error 1103 "" 
 	in
 	match Domain.find s2 referenceMain with
 	| Domain.Val (Domain.Store main2) -> add_global main2
-	| _ -> Domain.error 1104
+	| _ -> Domain.error 1104 ""
 
 and sfpSpecificationThirdPass sfp =
 	let s2 = sfpSpecificationSecondPass sfp in
-	if Domain.value_TBD_exists s2 then Domain.error 1105
+	if Domain.value_TBD_exists s2 then Domain.error 1105 ""
 	else s2
 
 and sfpSpecification sfp = sfpSpecificationThirdPass sfp
@@ -141,7 +141,7 @@ and sfpGlobal g =
 			let f = Domain.Global (Domain.And [gc; gs]) in
 			Domain.bind s r f
 		| Domain.Undefined -> Domain.bind s r (Domain.Global gc)
-		| _                  -> Domain.error 1106
+		| _                  -> Domain.error 1106 ""
 
 (** constraints **)
 and sfpConstraint (c : _constraint) =
@@ -179,7 +179,7 @@ and sfpAction (parameters, cost, conditions, effects) =
 	let get_parameters =
 		List.fold_left (fun acc (id, t) ->
 			match t with
-			| TBasic TInt | TBasic TFloat | TBasic TStr -> Domain.error 1107
+			| TBasic TInt | TBasic TFloat | TBasic TStr -> Domain.error 1107 ""
 			| _ -> (id, t) :: acc
 		) [] parameters
 	in

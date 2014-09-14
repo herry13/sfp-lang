@@ -7,12 +7,19 @@ NATIVE=0
 # binary name
 NAME=csfp
 
+# 0 = stack trace disabled, 1 = stack trace enabled
+STACK_TRACE=1
+
 ifeq ($(NATIVE),1)
 # native compiler
 COMPILER=ocamlfind ocamlopt -S -package yojson -linkpkg
 else
 # byte code compiler
+ifeq ($(STACK_TRACE),1)
+COMPILER=ocamlfind ocamlc -package yojson -linkpkg -g
+else
 COMPILER=ocamlfind ocamlc -package yojson -linkpkg
+endif
 endif
 
 # byte code libraries

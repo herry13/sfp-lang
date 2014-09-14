@@ -221,10 +221,12 @@ let make_ts typeEnvInit flatStoreInit typeEnvGoal flatStoreGoal typeValues =
 			(* only basic-value that can have TBD value at the goal state *)
 			if (Type.subtype type1 typeObject) &&
 					(MapRef.find ref flatStoreGoal) = TBD
-				then error 601
+				then error 601 ("only variable with basic-type that can " ^
+					"have TBD value at the goal state")
 			else
 				type1
-		| _, _ -> error 602  (* incompatible type between init & goal *)
+		| _, _ -> error 602 "incompatible type between initial & goal states"
+			(* incompatible type between init & goal *)
 	in
 	let accumulator = {
 			_map              = MapRef.add r_dummy dummy MapRef.empty;
@@ -234,7 +236,7 @@ let make_ts typeEnvInit flatStoreInit typeEnvGoal flatStoreGoal typeValues =
 	in
 	let result = MapRef.fold (
 			fun r v acc ->
-				if MapRef.mem r acc._map then error 603;
+				if MapRef.mem r acc._map then error 603 "";
 				match type_of_variable r with
 				| Syntax.TBasic Syntax.TAction
 				| Syntax.TBasic Syntax.TGlobal ->

@@ -57,7 +57,7 @@ and effect         = reference * basic
 exception SfError of int * string
 
 (** a function that raise an SfError **)
-val error : int -> 'a
+val error : int -> string -> 'a
 
 (* identifier-reference functions *)
 

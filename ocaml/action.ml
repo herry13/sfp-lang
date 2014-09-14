@@ -176,7 +176,7 @@ let decode_name (s: string): int * reference * basic MapStr.t =
 		| [] -> map
 		| (id, _) :: tail when id = "this" -> iter_param map tail
 		| (id, (Basic v)) :: tail -> iter_param (MapStr.add id v map) tail
-		| _ -> error 801
+		| _ -> error 801 "invalid action name"
 	in
 	match Str.bounded_split (Str.regexp " ") s 3 with
 	| s1 :: s2 :: s3 :: [] -> (
@@ -184,16 +184,16 @@ let decode_name (s: string): int * reference * basic MapStr.t =
 			let name =
 				match from_json s2 with
 				| Basic (Ref r) -> r
-				| _ -> error 802
+				| _ -> error 802 "invalid value"
 			in
 			let params =
 				match from_json s3 with
 				| Store s -> iter_param MapStr.empty s
-				| _       -> error 803
+				| _       -> error 803 "invalid value"
 			in
 			(id, name, params)
 		)
-	| _ -> error 804
+	| _ -> error 804 "invalid action name"
 ;;
 
 (****************************************************************************
@@ -230,7 +230,7 @@ let ground_parameters parameters name typeValues =
 let map_of_atoms = fun map _constraint ->
 	match _constraint with
 	| Eq (r, v) -> MapRef.add r v map
-	| _         -> error 805
+	| _         -> error 805 ""
 ;;
 
 (** for each clause of global constraints DNF, create a dummy action **)
@@ -268,7 +268,7 @@ let create_global_actions globalConstraint actions =
 					}
 				in
 				add action acc
-			| _ -> error 806
+			| _ -> error 806 ""
 		) actions clauses
 	| And clauses ->
 		let name = ["!global"] in
@@ -282,7 +282,7 @@ let create_global_actions globalConstraint actions =
 			}
 		in
 		add action actions
-	| _ -> error 807
+	| _ -> error 807 ""
 ;;
 
 (**
@@ -357,7 +357,7 @@ let compile_simple_implication preconditions effects variables
 				) [] acc
 			in
 			iter acc2 css
-		| _ -> error 808
+		| _ -> error 808 ""
 	in
 	let rec compile acc =
 		let acc1 = iter acc globalImplications in
@@ -405,7 +405,7 @@ let ground_action_of (name, params, cost, pre, eff) typeEnvironment variables
 					match c with
 					| Eq (r, v) -> MapRef.add r v pre2
 					| And css   -> List.fold_left map_of_atoms pre2 css
-					| _         -> error 809
+					| _         -> error 809 ""
 				in
 				let preconditions = compile_simple_implication pre3 eff2
 					variables globalImplications
@@ -469,7 +469,7 @@ let ground_action_of (name, params, cost, pre, eff) typeEnvironment variables
 				in
 				add action acc1
 			) acc preconditions
-		| _ -> error 810
+		| _ -> error 810 ""
 	) actions parameters
 ;;
 
@@ -485,6 +485,6 @@ let ground_actions typeEnvironment variables typeValues globalConstraints
 		| Action action ->
 			ground_action_of action typeEnvironment variables typeValues
 				addDummy globalImplications actions
-		| _ -> error 811 (* a non-action value *)
+		| _ -> error 811 "not an action" (* a non-action value *)
 	) (Type.values_of (Syntax.TBasic Syntax.TAction) typeValues) actions
 ;;

@@ -2,6 +2,22 @@
 
 open Array
 
+(* options *)
+let usage_msg = "usage: csfp [options]\n\nwhere [options] are:" ;;
+let opt_ast = ref "" ;;
+let opt_ast_json = ref "" ;;
+let opt_type = ref "" ;;
+let opt_json = ref "" ;;
+let opt_yaml = ref "" ;;
+let opt_fs = ref "" ;;
+let opt_init_file = ref "" ;;
+let opt_goal_file = ref "" ;;
+let opt_fdr = ref false ;;
+let opt_fd = ref false ;;
+let opt_apply_global = ref "" ;;
+let opt_silent = ref false;;
+
+
 let ast_of_file file =
 	let dummyLexbuf = Lexing.from_string "" in
 	let lexstack = Parser_helper.create file Lexer.token in
@@ -58,13 +74,19 @@ let fd_plan init goal =
 		output_string channel (Fdr.string_of fdr);
 		close_out channel;
 		(* invoke preprocessor *)
-		let cmd = preprocessor ^ " < " ^ sas_file in
+		let cmd =
+			if !opt_silent then preprocessor ^ "<" ^ sas_file ^ ">>output.log"
+			else preprocessor ^ "<" ^ sas_file
+		in
 		if not ((Sys.command cmd) = 0) then (
 			prerr_string "Error: preprocessor failed\n\n";
 			exit 1
 		);
 		(* invoke search *)
-		let cmd = search ^ " " ^ search_options ^ " < output" in
+		let cmd =
+			if !opt_silent then search ^ " " ^ search_options ^ "<output>>output.log"
+			else search ^ " " ^ search_options ^ "<output"
+		in
 		if not ((Sys.command cmd) = 0) then (
 			prerr_string "Error: search failed\n\n";
 			exit 1
@@ -79,9 +101,9 @@ let fd_plan init goal =
 				close_in channel;
 				let plan = Fdr.to_sfp_plan s fdr in
 				let plan = Plan.parallel_of plan in
-				"\n\nSolution plan:\n" ^ (Plan.json_of_parallel plan)
+				Plan.json_of_parallel plan
 			)
-			else "No solution!"
+			else "null"
 		in
 		if debug then
 			plan
@@ -101,24 +123,21 @@ let fd_plan init goal =
 			exit 1
 ;;
 
-let usage_msg = "usage: csfp [options]\n\nwhere [options] are:" ;;
-let opt_ast = ref "" ;;
-let opt_ast_json = ref "" ;;
-let opt_type = ref "" ;;
-let opt_json = ref "" ;;
-let opt_yaml = ref "" ;;
-let opt_fs = ref "" ;;
-let opt_init_file = ref "" ;;
-let opt_goal_file = ref "" ;;
-let opt_fdr = ref false ;;
-let opt_fd = ref false ;;
-let opt_apply_global = ref "" ;;
+let append_to_file str filepath =
+	let oc = open_out_gen [Open_wronly; Open_creat; Open_text]
+		0o666 filepath
+	in
+	output_string oc str;
+	close_out oc
+;;
 
 (**
  * main function
  *)
 let main =
 	let speclist = [
+			("-s", Arg.Set opt_silent,
+				"    Silent mode (default: false).");
 			("-json", Arg.Set_string opt_json,
 				" Compile and print the result in JSON (default).");
 			("-yaml", Arg.Set_string opt_yaml,
@@ -197,7 +216,21 @@ let main =
 	);
 	if !opt_fd then (
 		verify_files();
-		print_endline (fd_plan !opt_init_file !opt_goal_file)
+		try
+			print_endline (fd_plan !opt_init_file !opt_goal_file)
+		with
+		| Domain.SfError (code, msg) ->
+			if !opt_silent then (
+				print_endline "null";
+				append_to_file msg "output.log"
+			) else
+				raise (Domain.SfError (code, msg))
+		| e ->
+			if !opt_silent then (
+				print_endline "null";
+				append_to_file ((Printexc.to_string e) ^ "\n") "output.log"
+			) else
+				raise e
 	);
 	if !opt_apply_global <> "" then (
 		let store =

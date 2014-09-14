@@ -60,13 +60,20 @@ exception SfError of int * string
  * receive and print semantics error message
  * @code int error code
  *)
-let error code = raise (SfError (code, "[err" ^ (string_of_int code) ^ "]")) ;;
+let error code message =
+	if message = "" then
+		raise (SfError (code, "[err" ^ (string_of_int code) ^ "]"))
+	else
+		raise (SfError (code, "[err" ^ (string_of_int code) ^ "] " ^
+			message)) ;;
 
 (*******************************************************************
  * semantics algebras
  *******************************************************************)
 
 (* identifier and reference functions *)
+
+let (!^) r = String.concat "." r
 
 let rec prefix reference =
 	match reference with
@@ -112,8 +119,10 @@ let rec trace baseReference reference =
 	| "this" :: rs -> trace baseReference rs
 	| "root" :: rs -> trace [] rs
 	| "parent" :: rs ->
-		if baseReference = [] then error 501
-		else trace (prefix baseReference) rs
+		if baseReference = [] then
+			error 501 ("invalid reference " ^ !^reference)
+		else
+			trace (prefix baseReference) rs
 	| id :: rs -> trace (baseReference @+. id) rs
 ;;
 
@@ -165,7 +174,8 @@ let rec resolve store baseReference reference =
 	match reference with
 	| "root" :: rs   -> ([], find store !!rs)
 	| "parent" :: rs ->
-		if baseReference = [] then error 502
+		if baseReference = [] then
+			error 502 ("invalid reference " ^ !^reference)
 		else (
 			prefix baseReference,
 			find store !!((prefix baseReference) @++ rs)
@@ -185,12 +195,15 @@ let rec get_link store baseReference reference linkReference accumulator =
 		match linkReference with
 		| "root" :: rs -> ([], rs)
 		| "parent" :: rs ->
-			if baseReference = [] then error 515
-			else ([], (prefix baseReference) @++ rs)
+			if baseReference = [] then
+				error 515 ("invalid link-reference " ^ !^linkReference)
+			else
+				([], (prefix baseReference) @++ rs)
 		| "this" :: rs -> ([], baseReference @++ rs)
 		| _ -> (baseReference, linkReference)
 	in
-	if SetRef.exists (fun r -> r = ref) accumulator then error 503
+	if SetRef.exists (fun r -> r = ref) accumulator then
+		error 503 ("cyclic link-reference " ^ !^ref)
 	else
 		match (resolve store baseRef ref) with
 		| nsp, value -> (
@@ -198,15 +211,17 @@ let rec get_link store baseReference reference linkReference accumulator =
 				match value with
 				| Val (Link lr) -> get_link store (prefix r) reference lr
 				                       (SetRef.add r accumulator)
-				| _ -> if r @<= reference then error 504
-				       else (r, value)
+				| _ -> if r @<= reference then
+				           error 504 ("implicit cyclic link-reference " ^ !^r)
+				       else
+				           (r, value)
 			)
 ;;
 
 let resolve_link store baseReference reference linkReference =
 	match linkReference with
 	| Link lr -> get_link store baseReference reference lr SetRef.empty
-	| _       -> error 505
+	| _       -> error 505 "invalid link reference"
 ;;
 
 let rec put store identifier value =
@@ -228,17 +243,17 @@ and copy destination source prefix =
 
 and bind store reference value =
 	match reference with
-	| []       -> error 506
+	| []       -> error 506 "invalid reference"
 	| id :: rs ->
 		if rs = [] then put store id value
 		else
 			match store with
-			| []               -> error 507
+			| []               -> error 507 "invalid reference"
 			| (ids, vs) :: tail ->
 				if ids = id then
 					match vs with
 					| Store child -> (id, Store (bind child rs value)) :: tail
-					| _           -> error 508
+					| _           -> error 508 "invalid reference"
 				else
 					(ids,vs) :: bind tail reference value
 ;;
@@ -249,9 +264,9 @@ let inherit_proto store baseReference prototypeReference reference =
 	| _, Val (Link lr) -> (
 			match resolve_link store baseReference reference (Link lr) with
 			| _, Val (Store s) -> copy store s reference
-			| _, _             -> error 509
+			| _, _             -> error 509 ""
 		)
-	| _, _             -> error 510
+	| _, _             -> error 510 ""
 ;;
 
 let rec replace_link store baseReference identifier value baseReference1 =
@@ -259,7 +274,7 @@ let rec replace_link store baseReference identifier value baseReference1 =
 	match value with
 	| Link rl  -> (
 			match resolve_link store baseReference1 rp (Link rl) with
-			| _, Undefined -> error 511
+			| _, Undefined -> error 511 ""
 			| nsp, Val vp  -> (
 					let sp = bind store rp vp in
 					match vp with
@@ -311,7 +326,7 @@ let rec from_json store =
 		| head :: tail -> (
 				match sfp_of head with
 				| Basic bv -> (make_vector (bv :: acc) tail)
-				| _        -> error 512
+				| _        -> error 512 ""
 			)
 	and make_store acc s =
 		match s with
@@ -567,7 +582,8 @@ let substitute_parameter_of_reference reference groundParameters =
 		if MapStr.mem id groundParameters then
 			match MapStr.find id groundParameters with
 			| Ref r1 -> r1 @++ tail
-			| _      -> error 513
+			| _      -> error 513 ("cannot replace left-hand side " ^
+				"reference with a non-reference value")
 			            (* cannot replace left-hand side reference with
 						   a non-reference value *)
 		else reference
@@ -584,7 +600,7 @@ let substitute_parameter_of_basic_value basicValue groundParameters =
 			match MapStr.find id groundParameters with
 			| Ref r1            -> Ref (r1 @++ tail)
 			| v1 when tail = [] -> v1
-			| _                 -> error 514
+			| _                 -> error 514 ""
 		else basicValue
 	| _ -> basicValue
 
