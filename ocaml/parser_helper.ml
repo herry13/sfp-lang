@@ -19,9 +19,20 @@ type 'a t =
 		mutable lexbuf   : Lexing.lexbuf;
 		lexfunc          : Lexing.lexbuf -> 'a;
 	}
+;;
 
 (** (filename, line-number, column-number, token) **)
-exception ParseError of string * int * int * string
+exception ParseError of string * int * int * string ;;
+
+let string_of_parse_error pe =
+	match pe with
+	| ParseError (fname, lnum, lpos, token) ->
+		"--- Parse error ---\nfile:   " ^ fname ^
+		"\nline:   " ^ (string_of_int lnum) ^
+		"\ncolumn: " ^ (string_of_int lpos) ^
+		"\ntoken:  '" ^ token ^ "'"
+	| _ -> raise (Failure "invalid parameter")
+;;
 
 (** 
  * Create a lexstack with an initial top level filename and the lexer
@@ -114,3 +125,12 @@ and check_error e lexstack =
 		let fname, lnum, lpos = current_pos lexstack in
 		raise (ParseError (fname, lnum, lpos, (lexeme lexstack)))
 	| e -> raise e
+;;
+
+let ast_of_file file =
+	let dummy_lexbuf = Lexing.from_string "" in
+	let lexstack = create file Lexer.token in
+	try
+		Parser.sfp (get_token lexstack) dummy_lexbuf
+	with
+	| e -> check_error e lexstack

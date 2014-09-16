@@ -342,3 +342,8 @@ let to_sfp_plan (s: string) (dat: t) : Plan.sequential =
 
 let to_raw_sfp_plan (s: string) (dat: t): Plan.sequential =
 	convert_fdr_to_sfp_plan s dat false
+
+let of_files initialFile goalFile =
+	of_sfp (Parser_helper.ast_of_file initialFile)
+		(Parser_helper.ast_of_file goalFile)
+;;

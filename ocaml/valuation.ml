@@ -1,6 +1,5 @@
 open Syntax
 
-let referenceMain = ["main"] ;;
 let referenceGlobal = ["global"] ;;
 
 let sfBoolean b =
@@ -104,7 +103,7 @@ and sfpContext context =
 
 and sfpSpecificationFirstPass sfp = sfpContext sfp []
 
-and sfpSpecificationSecondPass sfp =
+and sfpSpecificationSecondPass ?main:(referenceMain=["main"]) sfp =
 	let s1 = sfpSpecificationFirstPass sfp in
 	let s2 =
 		match Domain.find s1 referenceMain with
@@ -123,12 +122,13 @@ and sfpSpecificationSecondPass sfp =
 	| Domain.Val (Domain.Store main2) -> add_global main2
 	| _ -> Domain.error 1104 ""
 
-and sfpSpecificationThirdPass sfp =
-	let s2 = sfpSpecificationSecondPass sfp in
+and sfpSpecificationThirdPass ?main:(referenceMain=["main"]) sfp =
+	let s2 = sfpSpecificationSecondPass ~main:referenceMain sfp in
 	if Domain.value_TBD_exists s2 then Domain.error 1105 ""
 	else s2
 
-and sfpSpecification sfp = sfpSpecificationThirdPass sfp
+and sfpSpecification ?main:(referenceMain=["main"]) sfp =
+	sfpSpecificationThirdPass ~main:referenceMain sfp
 
 
 (** global constraints **)

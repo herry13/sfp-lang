@@ -318,7 +318,6 @@ let rec resolve_forward_type typeEnv baseReference reference accumulator =
 		| "this" :: rs -> ([], baseReference @++ rs)
 		| _ -> (baseReference, reference)
 	in
-	print_endline (!^reference ^ " -- " ^ !^ref);
 	if SetRef.exists (fun r -> r = ref) accumulator
 		then error 413 ("cyclic reference " ^ !^reference)
 	else

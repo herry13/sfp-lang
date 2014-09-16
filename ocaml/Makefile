@@ -5,7 +5,7 @@
 NATIVE=0
 
 # binary name
-NAME=csfp
+NAME=sfp
 
 # 0 = stack trace disabled, 1 = stack trace enabled
 STACK_TRACE=1
@@ -38,7 +38,7 @@ BYTECODELIB= \
 	valuation.cmo \
 	plan.cmo \
 	fdr.cmo \
-	csfp.cmo
+	sfp.cmo
 
 # native code libraries
 NATIVELIB= \
@@ -56,13 +56,13 @@ NATIVELIB= \
 	valuation.cmx \
 	plan.cmx \
 	fdr.cmx \
-	csfp.cmx
+	sfp.cmx
 
 # default
-build: csfp
+build: sfp
 
-csfp: csfp.ml action parser_helper valuation type fdr plan
-	$(COMPILER) -c csfp.ml
+sfp: sfp.ml action parser_helper valuation type fdr plan
+	$(COMPILER) -c sfp.ml
 ifeq ($(NATIVE),1)
 	$(COMPILER) -o $(NAME) $(NATIVELIB)
 else

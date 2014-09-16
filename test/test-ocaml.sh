@@ -2,12 +2,12 @@
 
 BASEDIR="$(dirname $0)"
 CURRENTDIR=$(pwd)
-OPT_TYPE="-type"
-OPT_JSON="-json"
-OPT_YAML="-yaml"
-OPT_AST="-ast"
-OPT_AST_JSON="-ast-json"
-BIN="$BASEDIR/../ocaml/csfp"
+OPT_TYPE="-t"
+OPT_JSON="-j"
+#OPT_YAML="-yaml"
+OPT_AST="-x"
+#OPT_AST_JSON="-ast-json"
+BIN="$BASEDIR/../ocaml/sfp"
 EXT="sfp"
 
 red='\x1B[0;31m'
@@ -47,13 +47,13 @@ for file in $(cat $filelist); do
 		# AST: -ast
 		test $file $OPT_AST
 		# AST: -ast-json
-		test_ast_json $file
+		#test_ast_json $file
 		# type: -type
 		test $file $OPT_TYPE
 		# JSON: -json
 		test $file $OPT_JSON
 		# YAML: -yaml
-		test $file $OPT_YAML
+		#test $file $OPT_YAML
 	fi
 done
 echo "=== done ==="

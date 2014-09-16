@@ -1,5 +1,5 @@
 These are the error codes used in every module: 
-1xx - csfp.ml
+1xx - sfp.ml
 2xx - common.ml
 3xx - syntax.ml
 4xx - type.ml

@@ -6,6 +6,7 @@ lexer.mli
 *.cmi
 csf
 csfp
+sfp
 lexer.ml
 parser.ml
 .paths

@@ -6,6 +6,8 @@ type t = {
 
 val of_sfp : Syntax.sfp -> Syntax.sfp -> t
 
+val of_files : string -> string -> t
+
 val string_of : t -> string
 
 val variables_of : t -> Variable.ts
