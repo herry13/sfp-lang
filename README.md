@@ -25,7 +25,7 @@ This implementation is an SFP compiler based on its formal semantics. The curren
 - Global constraints
 - File inclusion
 - Keywords: `root`, `parent`, and `this`
-- Finite Domain Representation ([FDR](http://www.fast-downward.org/TranslatorOutputFormat)) generator for planning
+- Finite Domain Representation generator for planning
 - Partial-order plan generator
 - Numeric comparison operator: `<`, `<=`, `>`, `>=`
 
