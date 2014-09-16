@@ -12,7 +12,7 @@ SFP language serves two objectives:
 	- a set of actions, each of which has parameters, cost, preconditions (condition before applying the action), and effects (condition after applying the action)
 	- a set of global constraints (condition that must be satisfied at intermediate and final states)
 
-A short introduction of SFP can be read in [here](wiki).
+A short introduction of SFP can be read in [here](https://github.com/herry13/sfp-lang/wiki).
 
 This implementation is an SFP compiler based on its formal semantics. The current version supports the following features:
 - Static type system
