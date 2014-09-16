@@ -12,7 +12,7 @@ SFP language serves two objectives:
 	- a set of actions, each of which has parameters, cost, preconditions (condition before applying the action), and effects (condition after applying the action)
 	- a set of global constraints (condition that must be satisfied at intermediate and final states)
 
-SFP was developed based on [SmartFrog](http://smartfrog.org) language and [PDDL](http://en.wikipedia.org/wiki/Planning_Domain_Definition_Language). The syntax resembles SmartFrog language with new notations for describing actions and global constraints (using PDDL-style).
+A short introduction of SFP can be read in [here](wiki).
 
 This implementation is an SFP compiler based on its formal semantics. The current version supports the following features:
 - Static type system
