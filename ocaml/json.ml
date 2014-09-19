@@ -1,4 +1,8 @@
+(* Author: Herry (herry13@gmail.com)
+   Serialisation/Deserialisation to/from JSON *)
+
 open Common
+open Domain
 
 exception JsonError of int * string
 
@@ -48,7 +52,7 @@ let rec json_basic_value buf v =
 	                          (Yojson.Basic.to_string (`String s))
 	| Domain.Null      -> Buffer.add_string buf "null"
 	| Domain.Ref r     -> (
-			Buffer.add_string buf "\"$.";
+			Buffer.add_string buf "\"$";
 			Buffer.add_string buf !^r;
 			Buffer.add_char buf '"'
 		)
@@ -176,7 +180,7 @@ let json_action buf (_, parameters, cost, conditions, effects) =
 				json_parameters tail
 			)
 	in
-	Buffer.add_string buf "{\"parameters\":{";
+	Buffer.add_string buf "{\".type\":\"action\",\"parameters\":{";
 	json_parameters parameters;
 	Buffer.add_string buf "},\"cost\":";
 	(* cost *)
@@ -212,13 +216,13 @@ let rec of_value value =
 		match value with
 		| Domain.Basic bv -> json_basic_value buf bv
 		| Domain.Link r -> (
-				Buffer.add_string buf "\"§.";
+				Buffer.add_string buf "\"§";
 				Buffer.add_string buf !^r;
 				Buffer.add_char buf '"'
 			)
-		| Domain.TBD -> Buffer.add_string buf "\"§TBD\""
-		| Domain.Unknown -> Buffer.add_string buf "\"§unknown\""
-		| Domain.Nothing -> Buffer.add_string buf "\"§nothing\""
+		| Domain.TBD -> Buffer.add_string buf "\"$TBD\""
+		| Domain.Unknown -> Buffer.add_string buf "\"$unknown\""
+		| Domain.Nothing -> Buffer.add_string buf "\"$nothing\""
 		| Domain.Store child -> Buffer.add_string buf "{}"
 		| Domain.Global c -> json_constraint buf c
 		| Domain.Action a -> json_action buf a
@@ -234,12 +238,29 @@ let of_store typeEnv store =
 		| Syntax.TUndefined -> error 1303 ("type of " ^ !^r ^ " is undefined")
 		| t -> of_type t
 	in
+	let set_json_object_type ns id =
+		let r = Domain.(@+.) ns id in
+		match MapRef.find r typeEnv with
+		| Syntax.TUndefined -> error 1304 ("type of " ^ !^r ^ " is undefined")
+		| Syntax.TBasic Syntax.TSchema (id, Syntax.TRootSchema) ->
+			Buffer.add_string buf "\".type\":\"schema\""
+		| Syntax.TBasic Syntax.TSchema (id, super) -> (
+				Buffer.add_string buf "\".type\":\"schema\",\".super\":\"";
+				Buffer.add_string buf (of_type (Syntax.TBasic super));
+				Buffer.add_char buf '"'
+			)
+		| t -> (
+				Buffer.add_string buf "\".type\":\"";
+				Buffer.add_string buf (of_type t);
+				Buffer.add_char buf '"'
+			)
+	in
 	let rec json_store ns s = match s with
 		| [] -> ()
-		| (id, v) :: [] -> json_cell ns id v
+		(* | (id, v) :: [] -> json_cell ns id v *)
 		| (id, v) :: tail -> (
+			Buffer.add_char buf ',';
 				json_cell ns id v;
-				Buffer.add_char buf ',';
 				json_store ns tail
 			)
 	and json_cell ns id v = match v with
@@ -257,25 +278,27 @@ let of_store typeEnv store =
 			)
 		| Domain.Link r -> (
 				add_ident buf id;
-				Buffer.add_string buf "\"§.";
+				Buffer.add_string buf "\"§";
 				Buffer.add_string buf !^r;
 				Buffer.add_char buf '"'
 			)
 		| Domain.TBD -> (
 				add_ident ~_type:(json_variable_type ns id) buf id;
-				Buffer.add_string buf "\"§TBD\""
+				Buffer.add_string buf "\"$TBD\""
 			)
 		| Domain.Unknown -> (
 				add_ident ~_type:(json_variable_type ns id) buf id;
-				Buffer.add_string buf "\"§unknown\""
+				Buffer.add_string buf "\"$unknown\""
 			)
 		| Domain.Nothing -> (
 				add_ident ~_type:(json_variable_type ns id) buf id;
-				Buffer.add_string buf "\"§nothing\""
+				Buffer.add_string buf "\"$nothing\""
 			)
 		| Domain.Store child -> (
-				add_ident ~_type:(json_variable_type ns id) buf id;
+				add_ident buf id;
 				Buffer.add_char buf '{';
+				set_json_object_type ns id;
+				(* Buffer.add_string buf (json_variable_type ns id); *)
 				json_store (Domain.(@+.) ns id) child;
 				Buffer.add_char buf '}'
 			)
@@ -284,11 +307,11 @@ let of_store typeEnv store =
 				json_constraint buf c
 			)
 		| Domain.Action a -> (
-				add_ident ~_type:"action" buf id;
+				add_ident buf id;
 				json_action buf a
 			)
 	in
-	Buffer.add_char buf '{';
+	Buffer.add_string buf "{\".type\":\"object\"";
 	json_store [] store;
 	Buffer.add_char buf '}';
 	Buffer.contents buf
@@ -311,4 +334,34 @@ let of_flatstore flatstore =
 
 
 (* TODO *)
-let to_store str = (MapRef.empty, [])
+let to_store json =
+	let typeEnv = MapRef.empty in
+	let store = [] in
+	let reference_separator = Str.regexp "\\." in
+	let rec make_vector acc vec =
+		match vec with
+		| []           -> acc
+		| head :: tail -> (
+				match sfp_of head with
+				| Basic bv -> (make_vector (bv :: acc) tail)
+				| _        -> error 1035 ""
+			)
+	and make_store acc s =
+		match s with
+		| []              -> acc
+		| (id, v) :: tail -> make_store ((id, (sfp_of v)) :: acc) tail
+	and sfp_of = function
+		| `String str when (String.length str) > 2 &&
+		                   str.[0] = '$' && str.[1] = '.' ->
+			Basic (Ref (List.tl (Str.split reference_separator
+				str)))
+		| `String str -> Basic (String str)
+		| `Bool b     -> Basic (Boolean b)
+		| `Float f    -> Basic (Float f)
+		| `Int i      -> Basic (Int i)
+		| `Null       -> Basic Null
+		| `List vec   -> Basic (Vector (make_vector [] vec))
+		| `Assoc s    -> Store (make_store [] s)
+	in
+	let _ = sfp_of (Yojson.Basic.from_string json) in
+	(typeEnv, store)

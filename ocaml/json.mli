@@ -1,6 +1,5 @@
-(*******************************************************************
- * the semantics domains to JSON
- *******************************************************************)
+(* Author: Herry (herry13@gmail.com)
+   Serialisation/Deserialisation to/from JSON *)
 
 val of_store : Type.map -> Domain.store -> string
 
