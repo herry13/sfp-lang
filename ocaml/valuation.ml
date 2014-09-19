@@ -1,3 +1,5 @@
+(* Author: Herry (herry13@gmail.com) *)
+
 open Syntax
 
 let referenceGlobal = ["global"] ;;

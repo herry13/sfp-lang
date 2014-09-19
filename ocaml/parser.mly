@@ -1,6 +1,5 @@
 /**
- * parser.ml
- * author: Herry (herry13@gmail.com)
+ * Author: Herry (herry13@gmail.com)
  *
  * This is a parser which generates an abstract syntax tree from a concrete
  * syntax tree.

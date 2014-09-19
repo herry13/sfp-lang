@@ -1,3 +1,5 @@
+(* Author: Herry (herry13@gmail.com) *)
+
 type t = {
 	variables : Variable.ts;
 	actions   : Action.ts;

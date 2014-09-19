@@ -1,3 +1,5 @@
+(* Author: Herry (herry13@gmail.com) *)
+
 open Syntax
 
 val sfpSpecificationFirstPass : sfp -> Domain.store

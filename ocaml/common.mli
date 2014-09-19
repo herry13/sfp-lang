@@ -1,4 +1,5 @@
-(** common data structures used by other modules **)
+(* Author: Herry (herry13@gmail.com)
+   Common data structures used by other modules. *)
 
 module MapStr : Map.S with type key = string
 

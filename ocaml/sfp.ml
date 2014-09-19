@@ -1,4 +1,4 @@
-(* author: Herry (herry13@gmail.com) *)
+(* Author: Herry (herry13@gmail.com) *)
 
 open Array
 open Common
