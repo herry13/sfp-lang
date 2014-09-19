@@ -30,24 +30,28 @@ let evaluate_global_constraints store =
 ;;
 
 let generate_json file =
-	let ast = Parser_helper.ast_of_file file in
-	let _ = Type.sfpSpecification ast in
-	let main =
+	let mainReference =
 		if !opt_no_main then []
 		else ["main"]
 	in
-	let store = Valuation.sfpSpecification ~main:main ast in
+	let ast = Parser_helper.ast_of_file file in
+	let types = Type.sfpSpecification ~main:mainReference ast in
+	let store = Valuation.sfpSpecification ~main:mainReference ast in
 	if !opt_evaluate_global_constraints && not (evaluate_global_constraints
 	  store) then (
 		prerr_endline (file ^ ": global constraints are not satisfied!");
 		exit 1
 	);
-	print_endline (Domain.json_of_store store)
+	print_endline (Json.of_store types store)
 ;;
 
 let check_type file =
+	let mainReference =
+		if !opt_no_main then []
+		else ["main"]
+	in
 	print_endline (Type.string_of_map (Type.sfpSpecification
-		(Parser_helper.ast_of_file file)))
+		~main:mainReference (Parser_helper.ast_of_file file)))
 ;;
 
 let fd_plan init goal =
@@ -185,7 +189,6 @@ let main =
 			(Parser_helper.ParseError (f, l, p, t)))
 	| Domain.SfError (_, msg)
 	| Type.TypeError (_, msg) -> prerr_endline msg
-	| e -> raise e
 ;;
 
 let _ = main ;;
