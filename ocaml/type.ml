@@ -337,8 +337,7 @@ let rec resolve_forward_type typeEnv baseReference reference accumulator =
  * TODOC
  * visit every element of 'typeEnv', and then replace all TForward elements
  *)
-let replace_forward_type_in typeEnv =
-	let main = ["main"] in
+let replace_forward_type_in typeEnv mainReference =
 	let replace e r t tr islink =
 		let (proto, t_val) =
 			match resolve_forward_type e r tr SetRef.empty with
@@ -360,7 +359,7 @@ let replace_forward_type_in typeEnv =
 		match src with
 		| [] -> e3
 		| (r, t) :: tail ->
-			if not (main @<= r) || r = main then iter e3 tail
+			if not (mainReference @<= r) || r = mainReference then iter e3 tail
 			else
 				let result =
 					match t with
@@ -372,18 +371,17 @@ let replace_forward_type_in typeEnv =
 	iter typeEnv typeEnv
 
 (* perform second valuation of environment 'e' *)
-let second_pass_eval typeEnv =
-	let e = replace_forward_type_in typeEnv in
+let second_pass_eval typeEnv mainReference =
+	let e = replace_forward_type_in typeEnv mainReference in
 	if is_well_typed e then e
 	else error 417 "not well-typed"
 
-let get_main typeEnv =
-	let main = ["main"] in
+let get_main typeEnv mainReference =
 	let rec iter e buf =
 		match e with
 		| [] -> buf
 		| (r, t) :: tail ->
-			if not (main @<= r) then iter tail buf
+			if not (mainReference @<= r) then iter tail buf
 			else
 				let r1 = List.tl r in
 				if r1 = [] || domain buf r1 then iter tail buf
@@ -607,13 +605,18 @@ and sfpContext ctx : environment -> environment =
 		| GlobalContext (g, c)     -> sfpContext c (sfpGlobal g e)
 		| EmptyContext             -> e
 
-and sfpSpecification sfp =
+and sfpSpecification ?main:(mainReference=["main"]) sfp =
 	let e1 = sfpContext sfp [] in
-	if not (domain e1 ["main"]) then error 429 "main object is not exist"
+	if mainReference = [] then
+		let e2 = second_pass_eval e1 mainReference in
+		map_of e2
+	else if not (domain e1 mainReference) then
+		error 429 "main object is not exist"
 	else
-		let e2 = get_main (second_pass_eval e1) in
+		let e2 = get_main (second_pass_eval e1 mainReference) mainReference in
 		let e_main = assign e2 ["global"] TUndefined (TBasic TGlobal) in
 		map_of e_main
+;;
 
 
 (*******************************************************************

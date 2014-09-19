@@ -16,7 +16,7 @@ exception TypeError of int * string
 
 val string_of_map : map -> string
 
-val sfpSpecification : Syntax.sfp -> map
+val sfpSpecification : ?main:string list -> Syntax.sfp -> map
 
 val type_of : Domain.reference -> map -> Syntax._type
 
