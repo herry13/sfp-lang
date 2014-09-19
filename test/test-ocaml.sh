@@ -16,7 +16,13 @@ nocolor='\x1B[0m'
 
 function test {
 	if [[ -f $1 && "${1##*.}" = $EXT ]]; then
-		result=$($BIN $2 $1 2>&1 1>/dev/null)
+		if [ "$3" == "parse-json" ]; then
+			result=$($BIN $2 $1 | \
+				ruby -e "require 'json';puts (JSON.pretty_generate JSON.parse(STDIN.read))" \
+				2>&1 1>/dev/null)
+		else
+			result=$($BIN $2 $1 2>&1 1>/dev/null)
+		fi
 		if [[ $result != "" ]]; then
 			echo -e "$2 => $1 ${red}[Failed]${nocolor}"
 		else
@@ -51,7 +57,7 @@ for file in $(cat $filelist); do
 		# type: -type
 		test $file $OPT_TYPE
 		# JSON: -json
-		test $file $OPT_JSON
+		test $file $OPT_JSON "parse-json"
 		# YAML: -yaml
 		#test $file $OPT_YAML
 	fi
