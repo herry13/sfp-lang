@@ -18,6 +18,10 @@ clouddeploy-current.sfp
 clouddeploy-desired.sfp
 global1.sfp
 global2.sfp
+global3.sfp
+global4.sfp
+global5.sfp
+global6.sfp
 nothing1-init.sfp
 nothing1-goal.sfp
 numeric1.sfp

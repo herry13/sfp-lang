@@ -3,7 +3,6 @@
 BASEDIR="$(dirname $0)"
 CURRENTDIR=$(pwd)
 OPT_TYPE="-t"
-OPT_JSON="-j"
 #OPT_YAML="-yaml"
 OPT_AST="-x"
 #OPT_AST_JSON="-ast-json"
@@ -16,8 +15,8 @@ nocolor='\x1B[0m'
 
 function test {
 	if [[ -f $1 && "${1##*.}" = $EXT ]]; then
-		if [ "$3" == "parse-json" ]; then
-			result=$($BIN $2 $1 | \
+		if [ $# == 1 ]; then
+			result=$($BIN $1 | \
 				ruby -e "require 'json';puts (JSON.pretty_generate JSON.parse(STDIN.read))" \
 				2>&1 1>/dev/null)
 		else
@@ -57,7 +56,7 @@ for file in $(cat $filelist); do
 		# type: -type
 		test $file $OPT_TYPE
 		# JSON: -json
-		test $file $OPT_JSON "parse-json"
+		test $file
 		# YAML: -yaml
 		#test $file $OPT_YAML
 	fi
