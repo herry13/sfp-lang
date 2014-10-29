@@ -24,6 +24,7 @@ open Syntax
 %token ISA SCHEMA ASTERIX COLON TBOOL TINT TFLOAT TSTR TOBJ
 %token GLOBAL EQUAL NOT_EQUAL IF THEN IN NOT LPARENTHESIS RPARENTHESIS
 %token TOK_GREATER TOK_GREATER_EQUAL TOK_LESS TOK_LESS_EQUAL
+%token TOK_COLON_EQUAL
 %token COST CONDITIONS EFFECTS ACTION
 
 /* entry point to included file */
@@ -66,10 +67,10 @@ assignment
 	| reference type_def value { ($1, $2, $3) }
 
 value
-	: EQUAL equal_value EOS  { $2 }
-	| link_reference EOS     { Link $1 }
-	| ISA ID protos          { Prototype (SID $2, $3) }
-	| protos                 { Prototype (EmptySchema, $1) }
+	: EQUAL equal_value EOS              { $2 }
+	| TOK_COLON_EQUAL link_reference EOS { $2 }
+	| ISA ID protos                      { Prototype (SID $2, $3) }
+	| protos                             { Prototype (EmptySchema, $1) }
 
 equal_value
 	: basic       { Basic $1 }
@@ -94,7 +95,7 @@ basic
     | INT            { Int $1 }
     | FLOAT          { Float $1 }
     | STRING         { String $1 }
-    | data_reference { Reference $1 }
+    | data_reference { $1 }
     | NULL           { Null }
     | vector         { Vector $1 }
 
@@ -106,10 +107,10 @@ items
     | basic             { [$1] }
 
 link_reference
-    : reference { $1 }
+    : reference { Link $1 }
 
 data_reference
-    : reference { $1 }
+    : reference { Reference $1 }
 
 reference
     : ID SEP reference { $1 :: $3 }

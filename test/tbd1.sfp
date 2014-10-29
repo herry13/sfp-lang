@@ -3,5 +3,5 @@ main {
 	a = 1;
 	a = TBD;
 	b = 2;
-	a b;
+	a := b;
 }

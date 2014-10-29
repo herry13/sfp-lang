@@ -101,6 +101,7 @@ rule token =
 	| "<="        { TOK_LESS_EQUAL }
 	| '>'         { TOK_GREATER }
 	| '<'         { TOK_LESS }
+    | ":="        { TOK_COLON_EQUAL }
 	| int         { INT (Lexing.lexeme lexbuf) }
 	| float       { FLOAT (Lexing.lexeme lexbuf) }
 	| true_value  { BOOL "true" }

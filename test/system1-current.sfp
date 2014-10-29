@@ -9,5 +9,5 @@ main {
   pc1 isa Client {
     refer = s1.web;
   }
-  pc2 pc1;
+  pc2 := pc1;
 }
