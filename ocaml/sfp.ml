@@ -41,8 +41,8 @@ let generate_json file =
     let store = Valuation.sfpSpecification ~main:mainReference ast in
     if not !opt_not_eval_global_constraints &&
        not (evaluate_global_constraints store) then (
-        prerr_endline "Error: the specification violates the global constraints.";
-        exit 1
+        prerr_endline "[err700] The specification violates the global constraints.";
+        exit 700
     );
     print_endline (Json.of_store types store)
 ;;
@@ -84,12 +84,12 @@ let fd_plan init goal =
             | e -> false
         in
         if not (Sys.file_exists preprocessor) then (
-            prerr_string ("Error: " ^ preprocessor ^ " is not exist!\n\n");
-            exit 1
+            prerr_string ("[err1200] " ^ preprocessor ^ " is not exist!\n\n");
+            exit 1200
         );
         if not (Sys.file_exists search) then (
-            prerr_string ("Error: " ^ search ^ " is not exist!\n\n");
-            exit 1
+            prerr_string ("[err1201] " ^ search ^ " is not exist!\n\n");
+            exit 1201
         );
         (* generate FDR *)
         let fdr = Fdr.of_sfp (Parser_helper.ast_of_file init)
@@ -102,8 +102,8 @@ let fd_plan init goal =
                   else preprocessor ^ "<" ^ sas_file ^ ">>output.log"
         in
         if not ((Sys.command cmd) = 0) then (
-            prerr_string "Error: preprocessor failed\n\n";
-            exit 1
+            prerr_string "[err1202] Preprocessor failed\n\n";
+            exit 1202
         );
         (* invoke search *)
         let cmd =
@@ -111,8 +111,8 @@ let fd_plan init goal =
             else search ^ " " ^ search_options ^ "<output>>output.log"
         in
         if not ((Sys.command cmd) = 0) then (
-            prerr_string "Error: search failed\n\n";
-            exit 1
+            prerr_string "[err1203] Search failed\n\n";
+            exit 1203
         );
         (* read 'plan_file' *)
         let plan = if Sys.file_exists plan_file then read_file plan_file
@@ -129,9 +129,9 @@ let fd_plan init goal =
         plan
     with
         Not_found ->
-            prerr_string ("Error: environment variable FD_PREPROCESS" ^
+            prerr_string ("[err1204] Environment variable FD_PREPROCESS" ^
                 " or FD_SEARCH is not defined.\n\n");
-            exit 1
+            exit 1204
 ;;
 
 
@@ -181,11 +181,16 @@ let main =
             | _  -> List.iter (fun f -> generate_json f) !files
         )
     with
-    | Parser_helper.ParseError (f, l, p, t) ->
-        prerr_endline (Parser_helper.string_of_parse_error
-            (Parser_helper.ParseError (f, l, p, t)))
-    | Domain.SfError (_, msg)
-    | Type.TypeError (_, msg) -> prerr_endline msg
+    | Parser_helper.ParseError (f, l, p, t) -> (
+            prerr_endline (Parser_helper.string_of_parse_error
+                (Parser_helper.ParseError (f, l, p, t)));
+            exit 1501
+        )
+    | Domain.SfError (code, msg)
+    | Type.TypeError (code, msg) -> (
+            prerr_endline msg;
+            exit code
+        )
 ;;
 
 let _ = main ;;

@@ -13,3 +13,5 @@ These are the error codes used in every module:
 12xx - plan.ml
 13xx - json.ml
 14xx - yaml.ml
+15xx - parser.mly, parser_helper.ml
+16xx - lexer.mll
