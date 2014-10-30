@@ -92,82 +92,85 @@ The following files specify the model, the initial, and the goal state of a conf
 
 **model.sfp**:
 
-	// file : model.sfp
-	schema Machine {
-	  dns = "ns.foo";
-	}
-	schema Client extends Machine {
-	  refer: *Service = null;
-	  def redirect(s: Service) {
-	    condition { }
-	    effect {
-	      this.refer = s;
-	    }
-	  }
-	}
-	schema Service {
-	  running = true;
-	  port = 80;
-	  def start {
-	    condition {
-	      this.running = false;
-	    }
-	    effect {
-	      this.running = true;
-	    }
-	  }
-	  def stop {
-	    condition {
-	      this.running = true;
-	    }
-	    effect {
-	      this.running = false;
-	    }
-	  }
-	}
-
+```java
+// file : model.sfp
+schema Machine {
+  dns = "ns.foo";
+}
+schema Client extends Machine {
+  refer: *Service = null;
+  def redirect(s: Service) {
+    condition { }
+    effect {
+      this.refer = s;
+    }
+  }
+}
+schema Service {
+  running = true;
+  port = 80;
+  def start {
+    condition {
+      this.running = false;
+    }
+    effect {
+      this.running = true;
+    }
+  }
+  def stop {
+    condition {
+      this.running = true;
+    }
+    effect {
+      this.running = false;
+    }
+  }
+}
+```
 
 **initial.sfp**:
 
-	// file: initial.sfp
-	include "model.sfp";
-	main {
-	  s1 isa Machine {
-	    web isa Service { }
-	  }
-	  s2 extends s1, {
-	    web.running = false;
-	  }
-	  pc1 isa Client {
-	    refer = s1.web;
-	  }
-	  pc2 pc1;
-	}
-
+```java
+// file: initial.sfp
+include "model.sfp";
+main {
+  s1 isa Machine {
+    web isa Service { }
+  }
+  s2 extends s1, {
+    web.running = false;
+  }
+  pc1 isa Client {
+    refer = s1.web;
+  }
+  pc2 pc1;
+}
+```
 
 **goal.sfp**:
 
-	// file: goal.sfp
-	include "model.sfp";
-	main {
-	  s1 isa Machine {
-	    web isa Service {
-	      running = false;
-	    }
-	  }
-	  s2 extends s1, {
-	    web.running = true;
-	  }
-	  pc1 isa Client {
-	    refer = s2.web;
-	  }
-	  pc2 pc1;
-	  global {
-	    pc1.refer.running = true;
-	    pc2.refer.running = true;
-	  }
-	}
-
+```java
+// file: goal.sfp
+include "model.sfp";
+main {
+  s1 isa Machine {
+    web isa Service {
+      running = false;
+    }
+  }
+  s2 extends s1, {
+    web.running = true;
+  }
+  pc1 isa Client {
+    refer = s2.web;
+  }
+  pc2 pc1;
+  global {
+    pc1.refer.running = true;
+    pc2.refer.running = true;
+  }
+}
+```
 
 To generate the plan for the above configuration task, invoke the following command
 
