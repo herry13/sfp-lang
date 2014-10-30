@@ -40,3 +40,6 @@ nothing1-init.sfp
 nothing1-goal.sfp
 main-import1.sfp
 import2/main-import1.sfp
+enum1.sfp
+enum2-init.sfp
+enum2-goal.sfp

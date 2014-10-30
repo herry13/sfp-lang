@@ -11,7 +11,7 @@ main {
   pc1 isa Client {
     refer = s2.web;
   }
-  pc2 pc1;
+  pc2 := pc1;
   global {
     pc1.refer.running = true;
     pc2.refer.running = true;

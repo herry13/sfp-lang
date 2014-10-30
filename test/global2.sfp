@@ -6,4 +6,4 @@ main {
 
 global y = 2;
 
-!always y != 3;
+#always y != 3;
