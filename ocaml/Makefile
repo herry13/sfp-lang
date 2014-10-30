@@ -8,6 +8,7 @@ NATIVE=0
 NAME=sfp
 
 # 0 = stack trace disabled, 1 = stack trace enabled
+# Don't forget to set environment variable OCAMLRUNPARAM=b
 STACK_TRACE=1
 
 ifeq ($(NATIVE),1)
