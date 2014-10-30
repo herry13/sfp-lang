@@ -59,6 +59,11 @@ let current_pos ls =
 (** default file extension **)
 let file_extension = ".sfp" ;;
 
+(**
+ * If file='x', then find an imported file based on the following priorities:
+ * 1. 'x.sfp' in the working directory
+ * 2. 'x/x.sfp' in the working directory
+ *)
 let find_imported_file file =
     let file1 = file ^ file_extension in
     if Sys.file_exists file1 then file1
@@ -70,8 +75,13 @@ let find_imported_file file =
             exit 1500
         )
 
+(** holds a list of files that have been imported **)
 let imported_files = ref [] ;;
 
+(**
+ * Find the imported file, and if it has been imported before then
+ * returns an empty string (""), or returns the file.
+ *)
 let get_imported_file file : string =
     if file = "" then file
     else
@@ -110,7 +120,6 @@ let rec get_token ls dummy_lexbuf =
 			with e -> check_error_sfp e lexstack
 		)
     | Parser.IMPORT_FILE file ->
-        (* if file='x', then the included file will be 'x/x.sfp' *)
         Parser.SFP_INCLUDE
         (
             let imported_file = get_imported_file file in
