@@ -7,8 +7,6 @@ open Syntax
  * lexer helper type and functions
  *******************************************************************)
 
-let file_extension = ".sfp" ;;
-
 (** The Lexstack type. **)
 type 'a t =
 	{
@@ -58,6 +56,33 @@ let current_pos ls =
 	in
 	ls.filename, pos.Lexing.pos_lnum, linepos
 
+(** default file extension **)
+let file_extension = ".sfp" ;;
+
+let find_imported_file file =
+    let file1 = file ^ file_extension in
+    if Sys.file_exists file1 then file1
+    else
+        let file2 = file ^ "/" ^ file ^ file_extension in
+        if Sys.file_exists file2 then file2
+        else (
+            prerr_endline ("[err1500] cannot import '" ^ file ^ "'");
+            exit 1500
+        )
+
+let imported_files = ref [] ;;
+
+let get_imported_file file : string =
+    if file = "" then file
+    else
+        let file = find_imported_file file in
+        if List.exists (fun f -> f = file) !imported_files then ""
+        else (
+            imported_files := file :: !imported_files;
+            file
+        )
+;;
+
 (**
  * The next token need to accept an unused dummy lexbuf so that
  * a closure consisting of the function and a lexstack can be passed
@@ -88,12 +113,16 @@ let rec get_token ls dummy_lexbuf =
         (* if file='x', then the included file will be 'x/x.sfp' *)
         Parser.SFP_INCLUDE
         (
-            let lexstack =
-                create (file ^ "/" ^ file ^ file_extension) Lexer.token
-            in
-            try
-                Parser.incontext_included (get_token lexstack) dummy_lexbuf
-            with e -> check_error_sfp e lexstack
+            let imported_file = get_imported_file file in
+            if imported_file <> "" then (
+                let lexstack =
+                    create imported_file Lexer.token
+                in
+                try
+                    Parser.incontext_included (get_token lexstack) dummy_lexbuf
+                with e -> check_error_sfp e lexstack
+            )
+            else (fun c -> c)
         )
 	| Parser.EOF ->
 		(
