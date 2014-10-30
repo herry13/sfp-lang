@@ -1,6 +1,6 @@
 include "primitive1.sfp";
 
-a {
+main.a {
 	#include "primitive1.sfp";
 }
 

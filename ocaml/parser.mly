@@ -15,10 +15,11 @@ open Syntax
 %token <string> INT
 %token <string> FLOAT
 %token <string> STRING
-%token NULL TOK_TBD TOK_UNKNOWN TOK_NOTHING
-%token <string> INCLUDE
-%token <string> SFP_INCLUDE_FILE
 %token <string> ID
+%token NULL TOK_TBD TOK_UNKNOWN TOK_NOTHING
+%token <string> INCLUDE_FILE
+%token <string> SFP_INCLUDE_FILE
+%token <string> IMPORT_FILE
 %token EXTENDS COMMA DATA BEGIN END SEP
 %token LBRACKET RBRACKET EOS EOF
 %token ISA SCHEMA ASTERIX COLON TBOOL TINT TFLOAT TSTR TOBJ
@@ -28,7 +29,7 @@ open Syntax
 %token COST CONDITIONS EFFECTS ACTION
 
 /* entry point to included file */
-%token <Syntax.block -> Syntax.block> SF_INCLUDE
+%token <Syntax.block -> Syntax.block> INCLUDE
 %token <Syntax.context -> Syntax.context> SFP_INCLUDE
 
 /* entry point for main-file is 'sfp', for included file is
@@ -59,7 +60,7 @@ inblock_included
 block
 	: assignment block     { fun b -> AssignmentBlock ($1, $2 b) }
 	| GLOBAL global block  { fun b -> GlobalBlock ($2, $3 b) }
-	| SF_INCLUDE EOS block { fun b -> $1 ($3 b) }
+	| INCLUDE EOS block { fun b -> $1 ($3 b) }
 	|                      { fun b -> b }
 
 assignment

@@ -1,0 +1,6 @@
+include "include2.sfp";
+
+main {
+    a isa X { }
+}
+

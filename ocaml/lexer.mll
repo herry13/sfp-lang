@@ -47,7 +47,8 @@ let ident            = ['a'-'z' 'A'-'Z' '_'] ['a'-'z' 'A'-'Z' '0'-'9' '_' '-']*
 let comment          = "//" [^'\n''\r']*
 let comments         = '/' '*'+ (('*'[^'/'])+|[^'*']+)* '*'+ '/'
 let include_file     = "#include"
-let sfp_include_file = "include" | "import"
+let sfp_include_file = "include"
+let import_file      = "import"
 let true_value       = "true"
 let false_value      = "false"
 let null_value       = "null" | "NULL"
@@ -81,9 +82,11 @@ rule token =
 	| comment     { token lexbuf }
 	| '/' '*'+    { read_comments lexbuf; token lexbuf }
 	| include_file white '"'
-	              { INCLUDE (read_string (Buffer.create 17) lexbuf) }
+	              { INCLUDE_FILE (read_string (Buffer.create 17) lexbuf) }
 	| sfp_include_file white '"'
 	              { SFP_INCLUDE_FILE (read_string (Buffer.create 17) lexbuf) }
+    | import_file white '"'
+                  { IMPORT_FILE (read_string (Buffer.create 17) lexbuf) }
 	| ','         { COMMA }
 	| '{'         { BEGIN }
 	| '}'         { END }

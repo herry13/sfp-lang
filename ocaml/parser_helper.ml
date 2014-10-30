@@ -7,6 +7,8 @@ open Syntax
  * lexer helper type and functions
  *******************************************************************)
 
+let file_extension = ".sfp" ;;
+
 (** The Lexstack type. **)
 type 'a t =
 	{
@@ -64,10 +66,10 @@ let current_pos ls =
 let rec get_token ls dummy_lexbuf =
 	let token = ls.lexfunc ls.lexbuf in
 	match token with
-	| Parser.INCLUDE file ->
+	| Parser.INCLUDE_FILE file ->
 		(* parse included file: this is SF-style include (the included file
 		   must be legal statements) *)
-		Parser.SF_INCLUDE
+		Parser.INCLUDE
 		(
 			let lexstack = create file Lexer.token in
 			try 
@@ -82,6 +84,17 @@ let rec get_token ls dummy_lexbuf =
 				Parser.incontext_included (get_token lexstack) dummy_lexbuf
 			with e -> check_error_sfp e lexstack
 		)
+    | Parser.IMPORT_FILE file ->
+        (* if file='x', then the included file will be 'x/x.sfp' *)
+        Parser.SFP_INCLUDE
+        (
+            let lexstack =
+                create (file ^ "/" ^ file ^ file_extension) Lexer.token
+            in
+            try
+                Parser.incontext_included (get_token lexstack) dummy_lexbuf
+            with e -> check_error_sfp e lexstack
+        )
 	| Parser.EOF ->
 		(
 			match ls.stack with

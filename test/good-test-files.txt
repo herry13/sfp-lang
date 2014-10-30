@@ -38,3 +38,5 @@ unknown1-init.sfp
 unknown1-goal.sfp
 nothing1-init.sfp
 nothing1-goal.sfp
+main-import1.sfp
+import2/main-import1.sfp
