@@ -14,6 +14,7 @@ and basic     = Boolean of bool
               | Null
               | Vector of vector
               | Ref of reference
+              | EnumElement of string * string
 and value     = Basic of basic
               | Store of store
               | Global of _constraint
@@ -22,6 +23,7 @@ and value     = Basic of basic
               | TBD
               | Unknown
               | Nothing
+              | Enum of string list
 and _value    = Val of value
               | Undefined
 and cell      = ident * value
@@ -295,15 +297,18 @@ and accept store baseReference store1 baseReference1 =
 		accept sq baseReference sp baseReference1
 ;;
 
-let rec value_TBD_exists store =
+let rec value_TBD_exists ns store =
 	match store with
-	| []            -> false
+	| []            -> []
 	| (id, v) :: ss ->
 		match v with
-		| TBD      -> true
-		| Store sp -> if value_TBD_exists sp then true
-		              else value_TBD_exists ss
-		| _        -> value_TBD_exists ss
+		| TBD      -> ns @+. id
+		| Store sp -> (
+                match value_TBD_exists (ns @+. id) sp with
+                | []  -> value_TBD_exists ns ss
+                | ref -> ref
+            )
+		| _        -> value_TBD_exists ns ss
 ;;
 
 

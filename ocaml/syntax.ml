@@ -9,6 +9,7 @@ type sf            = block
 and  sfp           = context
 and  context       = AssignmentContext of assignment * context
                    | SchemaContext     of schema * context
+                   | EnumContext       of enum * context
                    | GlobalContext     of _constraint * context
                    | EmptyContext
 and  block         = AssignmentBlock of assignment * block
@@ -40,6 +41,9 @@ and schema      = string * superSchema * block
 and superSchema = SID of string
                 | EmptySchema
 
+(** enum syntax **)
+and enum = string * string list
+
 (** type syntax **)
 and _type     = TBasic   of basicType
               | TVec     of _type
@@ -59,6 +63,7 @@ and basicType = TBool                         (* (Type Bool)   *)
               | TAction                       (* (Type Action) *)
               | TGlobal                       (* (Type Global) *)
               | TRootSchema
+              | TEnum of string * string list (* (Type Enum)   *)
 
 (** constraint syntax **)
 and _constraint = Eq of reference * basicValue
@@ -163,21 +168,23 @@ and string_of_basic_type = function
 	| TNull               -> "null"
 	| TAction             -> "act"
 	| TGlobal             -> "glob"
+    | TEnum (id, _)       -> "%" ^ id
 
 and string_of_super_schema = function
 	| SID id      -> " isa " ^ id
 	| EmptySchema -> ""
 
 and string_of_schema (sid, ss, b) =
-	sid ^ (string_of_super_schema ss) ^ " {\n" ^ (string_of_block b) ^ "}"
+	"schema " ^ sid ^ (string_of_super_schema ss) ^ " {\n" ^ (string_of_block b) ^ "}"
+
+and string_of_enum (eid, elements) =
+    "enum " ^ eid ^ " {\n   " ^ (String.concat ",\n   " elements) ^ "\n}"
 
 and string_of_context = function
-	| AssignmentContext (a, c) -> (string_of_assignment a) ^ "\n" ^
-	                                  (string_of_context c)
-	| SchemaContext (s, c)     -> (string_of_schema s) ^ "\n" ^
-	                                  (string_of_context c)
-	| GlobalContext (g, c)     -> (string_of_global g) ^ "\n" ^
-	                                  (string_of_context c)
+	| AssignmentContext (a, c) -> (string_of_assignment a) ^ "\n" ^ (string_of_context c)
+	| SchemaContext (s, c)     -> (string_of_schema s) ^ "\n" ^ (string_of_context c)
+    | EnumContext (enum, c)    -> (string_of_enum enum) ^ "\n" ^ (string_of_context c)
+	| GlobalContext (g, c)     -> (string_of_global g) ^ "\n" ^ (string_of_context c)
 	| EmptyContext             -> ""
 
 and string_of_sfp sfp = string_of_context sfp
@@ -438,6 +445,16 @@ let json_of_sfp sfp =
 		Buffer.add_string buf "],[";
 		json_of_block b;
 		Buffer.add_string buf "]]"
+    and json_of_enum (eid, elements) =
+        Buffer.add_string buf "[\"";
+        Buffer.add_string buf eid;
+        Buffer.add_string buf "\",[\"enum\",";
+        List.iter (fun el ->
+            Buffer.add_char buf '"';
+            Buffer.add_string buf el;
+            Buffer.add_char buf '"'
+        ) elements;
+        Buffer.add_string buf "]]"
 	and json_of_assignment (r, t, v) =
 		Buffer.add_string buf "[\"";
 		Buffer.add_string buf !^r;
@@ -477,6 +494,11 @@ let json_of_sfp sfp =
 				json_of_schema s;
 				json_of_context ~first:false c
 			)
+        | EnumContext (enum, c) -> (
+                if not fst then Buffer.add_char buf ',';
+                json_of_enum enum;
+                json_of_context ~first:false c
+            )
 		| GlobalContext (g, c) -> (
 				if not fst then Buffer.add_char buf ',';
 				json_of_global g;

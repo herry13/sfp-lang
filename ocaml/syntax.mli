@@ -7,6 +7,7 @@ type sf            = block
 and  sfp           = context
 and  context       = AssignmentContext of assignment * context
                    | SchemaContext     of schema * context
+                   | EnumContext       of enum * context
                    | GlobalContext     of _constraint * context
                    | EmptyContext
 and  block         = AssignmentBlock of assignment * block
@@ -38,6 +39,9 @@ and schema      = string * superSchema * block
 and superSchema = SID of string
                 | EmptySchema
 
+(** enum syntax **)
+and enum = string * string list
+
 (** type syntax **)
 and _type     = TBasic of basicType
               | TVec   of _type
@@ -57,6 +61,7 @@ and basicType = TBool                         (* (Type Bool)   *)
               | TAction                       (* (Type Action) *)
               | TGlobal                       (* (Type Global) *)
               | TRootSchema
+              | TEnum of string * string list (* (Type Enum)   *)
 
 (** constraint syntax **)
 and _constraint = Eq           of reference * basicValue

@@ -22,8 +22,9 @@ open Syntax
 %token <string> IMPORT_FILE
 %token EXTENDS COMMA DATA BEGIN END SEP
 %token LBRACKET RBRACKET EOS EOF
-%token ISA SCHEMA ASTERIX COLON TBOOL TINT TFLOAT TSTR TOBJ
-%token GLOBAL EQUAL NOT_EQUAL IF THEN IN NOT LPARENTHESIS RPARENTHESIS
+%token ISA SCHEMA ENUM ASTERIX COLON TBOOL TINT TFLOAT TSTR TOBJ
+%token GLOBAL SOMETIME
+%token EQUAL NOT_EQUAL IF THEN IN NOT LPARENTHESIS RPARENTHESIS
 %token TOK_GREATER TOK_GREATER_EQUAL TOK_LESS TOK_LESS_EQUAL
 %token TOK_COLON_EQUAL
 %token COST CONDITIONS EFFECTS ACTION
@@ -49,6 +50,7 @@ incontext_included
 
 sfpcontext
 	: SCHEMA schema sfpcontext   { fun c -> SchemaContext ($2, $3 c) }
+    | ENUM enum sfpcontext       { fun c -> EnumContext ($2, $3 c) }
 	| GLOBAL global sfpcontext   { fun c -> GlobalContext ($2, $3 c) }
 	| SFP_INCLUDE EOS sfpcontext { fun c -> $1 ($3 c) }
 	| assignment sfpcontext      { fun c -> AssignmentContext ($1, $2 c) }
@@ -116,6 +118,13 @@ data_reference
 reference
     : ID SEP reference { $1 :: $3 }
     | ID               { [$1] }
+
+enum
+    : ID BEGIN enum_elements END { ($1, $3) }
+
+enum_elements
+    : ID COMMA enum_elements { $1 :: $3 }
+    | ID                     { [$1] }
 
 schema
 	: ID super BEGIN block END { ($1, $2, $4 EmptyBlock) }

@@ -17,11 +17,11 @@
 	(* reserved words *)
 	let keywords = ["true"; "false"; "null"; "NULL"; "extends"; "DATA"; "TBD";
 	                "unknown"; "nothing";
-	                "isa"; "schema"; "bool"; "int"; "float";
-	                "str"; "string"; "obj"; "object"; "include"; "import";
+                    "bool"; "int"; "float"; "string"; "object"; "enum";
+	                "isa"; "schema"; "include"; "import";
 	                "in"; "if"; "then"; "global"; "not";
-	                "def"; "action"; "sub"; "cost"; "condition"; "conditions";
-	                "effect"; "effects"; "!always"; "!sometime"]
+	                "def"; "action"; "cost"; "condition"; "conditions";
+	                "effect"; "effects"; "#always"; "#sometime"]
 
 	let is_keyword id =
 		let rec check id words =
@@ -59,17 +59,19 @@ let extends          = "extends"
 let data_ref         = "DATA"
 let isa              = "isa"
 let schema           = "schema"
+let enum             = "enum"
 let t_bool           = "bool"
 let t_int            = "int"
 let t_float          = "float"
-let t_str            = "str" | "string"
-let t_obj            = "obj" | "object"
+let t_str            = "string"
+let t_obj            = "object"
 let _in              = "in"
 let _if              = "if"
 let _then            = "then"
-let _global          = "global" | "!always"
+let _global          = "global" | "#always"
+let _sometime        = "#sometime"
 let _not             = "not"
-let action           = "def" | "action" | "sub"
+let action           = "def" | "action"
 let cost             = "cost"
 let conditions       = "conditions" | "condition"
 let effects          = "effects" | "effect"
@@ -117,6 +119,7 @@ rule token =
 	| data_ref    { DATA }
 	| isa         { ISA }
 	| schema      { SCHEMA }
+    | enum        { ENUM }
 	| t_bool      { TBOOL }
 	| t_int       { TINT }
 	| t_float     { TFLOAT }
@@ -127,6 +130,7 @@ rule token =
 	| _if         { IF }
 	| _then       { THEN }
 	| _global     { GLOBAL }
+    | _sometime   { SOMETIME }
 	| cost        { COST }
 	| conditions  { CONDITIONS }
 	| effects     { EFFECTS }

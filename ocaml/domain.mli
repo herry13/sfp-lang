@@ -14,6 +14,7 @@ and basic     = Boolean of bool
               | Null
               | Vector of vector
               | Ref of reference
+              | EnumElement of string * string
 and value     = Basic of basic
               | Store of store
               | Global of _constraint
@@ -22,6 +23,7 @@ and value     = Basic of basic
               | TBD
               | Unknown
               | Nothing
+              | Enum of string list
 and _value    = Val of value
               | Undefined
 and cell      = ident * value
@@ -99,7 +101,7 @@ val inherit_proto : store -> reference -> reference -> reference -> store
 
 val accept : store -> reference -> store -> reference -> store
 
-val value_TBD_exists : store -> bool
+val value_TBD_exists : reference -> store -> reference
 
 (*******************************************************************
  * domain convertion functions to string, JSON, or YAML

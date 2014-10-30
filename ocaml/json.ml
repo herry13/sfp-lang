@@ -57,6 +57,13 @@ let rec json_basic_value buf v =
 			Buffer.add_char buf '"'
 		)
 	| Domain.Vector vec -> json_vector vec
+    | Domain.EnumElement (name, element) -> (
+            Buffer.add_string buf "\"%";
+            Buffer.add_string buf name;
+            Buffer.add_char buf '.';
+            Buffer.add_string buf element;
+            Buffer.add_char buf '"'
+        )
 ;;
 
 let of_basic_value v =
@@ -226,6 +233,7 @@ let rec of_value value =
 		| Domain.Store child -> Buffer.add_string buf "{}"
 		| Domain.Global c -> json_constraint buf c
 		| Domain.Action a -> json_action buf a
+        | Domain.Enum _ -> Buffer.add_string buf ("\"%enum\"")
 	);
 	Buffer.contents buf
 ;;
@@ -310,6 +318,13 @@ let of_store typeEnv store =
 				add_ident buf id;
 				json_action buf a
 			)
+        | Domain.Enum elements -> (
+                add_ident buf id;
+                Buffer.add_char buf '{';
+                Buffer.add_string buf "\".type\":\"enum\",\"elements\":[\"";
+                Buffer.add_string buf (String.concat "\",\"" elements);
+                Buffer.add_string buf "\"]}"
+            )
 	in
 	Buffer.add_string buf "{\".type\":\"object\"";
 	json_store [] store;
