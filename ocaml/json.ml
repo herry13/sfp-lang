@@ -334,16 +334,23 @@ let of_store typeEnv store =
 
 let of_flatstore flatstore =
 	let buf = Buffer.create 42 in
-	Buffer.add_string buf "{\n";
+    let first = ref true in
+	Buffer.add_char buf '{';
 	MapRef.iter (
 		fun r v ->
+            if !first then (
+                Buffer.add_char buf '\n';
+                first := false
+            )
+            else (
+                Buffer.add_string buf ",\n"
+            );
 			Buffer.add_string buf "  \"";
 			Buffer.add_string buf !^r;
 			Buffer.add_string buf "\": ";
 			Buffer.add_string buf (of_value v);
-			Buffer.add_char buf '\n'
 	) flatstore;
-	Buffer.add_char buf '}';
+	Buffer.add_string buf "\n}";
 	Buffer.contents buf
 ;;
 
