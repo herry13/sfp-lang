@@ -59,21 +59,51 @@ let current_pos ls =
 (** default file extension **)
 let file_extension = ".sfp" ;;
 
+(** library paths **)
+let library_paths : string list ref = ref [] ;;
+
+(**
+ * If file '<dir>/x.sfp' exists then return the path,
+ * or if file '<dir>/x/x.sfp' exists then return the path,
+ * or return an empty string.
+ *)
+let find_file_in_directory file dir =
+    let dir = dir ^ "/" in
+    let file1 = dir ^ file ^ file_extension in
+    if Sys.file_exists file1 then file1
+    else
+        let file2 = dir ^ file ^ "/" ^ file ^ file_extension in
+        if Sys.file_exists file2 then file2
+        else ""
+;;
+
 (**
  * If file='x', then find an imported file based on the following priorities:
  * 1. 'x.sfp' in the working directory
  * 2. 'x/x.sfp' in the working directory
+ * 3. '<dir1>/x.sfp'   where SFP_LIB=<dir1>:<dir2>:...
+ * 4. '<dir1>/x/x.sfp' where SFP_LIB=<dir1>:<dir2>:...
+ * 5. '<dir2>/x.sfp'   where SFP_LIB=<dir1>:<dir2>:...
+ * 6. '<dir2>/x/x.sfp' where SFP_LIB=<dir1>:<dir2>:...
+ * 7. ...and so on
  *)
 let find_imported_file file =
-    let file1 = file ^ file_extension in
-    if Sys.file_exists file1 then file1
-    else
-        let file2 = file ^ "/" ^ file ^ file_extension in
-        if Sys.file_exists file2 then file2
-        else (
-            prerr_endline ("[err1500] cannot import '" ^ file ^ "'");
-            exit 1500
-        )
+    let rec find_file paths =
+        match paths with
+        | [] ->
+            (
+                prerr_endline ("[err1500] cannot import '" ^ file ^ "'");
+                exit 1500
+            )
+        | path :: rest ->
+            (
+                let file1 = find_file_in_directory file path in
+                if file1 <> "" then file1
+                else find_file rest
+            )
+    in
+    find_file ("." :: !library_paths)
+;;
 
 (** holds a list of files that have been imported **)
 let imported_files = ref [] ;;

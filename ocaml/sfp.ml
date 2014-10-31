@@ -24,6 +24,17 @@ let opt_not_eval_global_constraints = ref false ;;
 
 let files : string list ref = ref [] ;;
 
+(* environment variable that holds the library paths *)
+let env_var_library_paths = "SFP_LIB" ;;
+
+let set_library_paths =
+    try
+        Parser_helper.library_paths :=
+            Str.split (Str.regexp ":") (Sys.getenv env_var_library_paths)
+    with
+        Not_found -> ()
+;;
+
 let evaluate_global_constraints store =
     match Domain.find store ["global"] with
     | Domain.Undefined -> true
@@ -154,6 +165,8 @@ let main =
     Arg.parse options (fun f -> files := f :: !files) usage_msg_with_options;
 
     try
+        set_library_paths;
+
         if !opt_check_syntax then
             List.iter (fun f ->
                 let _ = Parser_helper.ast_of_file f in
