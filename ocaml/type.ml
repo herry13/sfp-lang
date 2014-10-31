@@ -39,7 +39,7 @@ let (@<=)  = Domain.(@<=);;
 let (@<)   = Domain.(@<);;
 let (!!)   = Domain.(!!);;
 let (@<<)  = Domain.(@<<);;
-let (!^)   = Domain.(!^);;
+let (!^) r = String.concat "." r ;; (* Domain.(!^);; *)
 
 exception TypeError of int * string
 

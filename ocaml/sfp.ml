@@ -5,7 +5,7 @@ open Common
 
 let usage_msg =
     "Usage: sfp [options] <spec-file>\n" ^
-    "       sfp -f <init_file> <goal_file>\n" ^
+    "       sfp -d <init_file> <goal_file>\n" ^
     "       sfp -p <init_file> <goal_file>\n"
 ;;
 
@@ -161,7 +161,6 @@ let main =
                 ()
             ) !files
         else if !opt_check_type then (
-            opt_check_syntax := false;
             List.iter (fun f -> check_type f) !files
         )
         else if !opt_fdr then (
