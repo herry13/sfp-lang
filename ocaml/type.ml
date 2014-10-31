@@ -303,7 +303,9 @@ let inherit_env typeEnv baseReference prototype reference =
 let rec resolve_forward_type typeEnv baseReference reference accumulator =
     let follow_forward_type baseRef refType =
         let r = baseRef @++ reference in
-        if r @<= refType
+        if SetRef.exists (fun rx -> rx = r) accumulator
+            then error 413 ("cyclic reference " ^ !^r)
+        else if r @<= refType
             then error 412 ("implicit cyclic reference " ^ !^refType)
         else
             resolve_forward_type typeEnv r refType (SetRef.add r accumulator)
