@@ -5,8 +5,8 @@ open Common
 
 let usage_msg =
     "Usage: sfp [options] <spec-file>\n" ^
-    "       sfp -d <init_file> <goal_file>\n" ^
-    "       sfp -p <init_file> <goal_file>\n"
+    "       sfp -d <initial_file> <goal_file>\n" ^
+    "       sfp -p <initial_file> <goal_file>\n"
 ;;
 
 let usage_msg_with_options =
@@ -56,7 +56,7 @@ let check_type file =
         ~main:mainReference (Parser_helper.ast_of_file file)))
 ;;
 
-let fd_plan init goal =
+let fd_plan initFile goalFile =
     let fd_preprocessor = "FD_PREPROCESS" in
     let fd_search       = "FD_SEARCH" in
     let fd_option       = "FD_OPTIONS" in
@@ -92,8 +92,8 @@ let fd_plan init goal =
             exit 1201
         );
         (* generate FDR *)
-        let fdr = Fdr.of_sfp (Parser_helper.ast_of_file init)
-            (Parser_helper.ast_of_file goal)
+        let fdr = Fdr.of_sfp (Parser_helper.ast_of_file initFile)
+                             (Parser_helper.ast_of_file goalFile)
         in
         (* save FDR to sas_file *)
         write_file sas_file (Fdr.string_of fdr);
@@ -118,8 +118,7 @@ let fd_plan init goal =
         let plan = if Sys.file_exists plan_file then read_file plan_file
                    else "null"
         in
-        let plan = Plan.json_of_parallel (Plan.parallel_of
-            (Fdr.to_sfp_plan plan fdr))
+        let plan = Plan.json_of_parallel (Plan.parallel_of (Fdr.to_sfp_plan plan fdr))
         in
         if not debug then (
             try
@@ -165,14 +164,13 @@ let main =
         )
         else if !opt_fdr then (
             match !files with
-            | init :: goal :: [] ->
-                print_endline (Fdr.string_of (Fdr.of_files init goal))
-            | _ -> prerr_endline "Usage: sfp -f <init_file> <goal_file>"
+            | goalFile :: initFile :: [] -> print_endline (Fdr.string_of (Fdr.of_files initFile goalFile))
+            | _                          -> prerr_endline "Usage: sfp -f <initial_file> <goal_file>"
         )
         else if !opt_planning then (
             match !files with
-            | init :: goal :: [] -> print_endline (fd_plan init goal)
-            | _ -> prerr_endline "Usage: sfp -p <init_file> <goal_file>"
+            | goalFile :: initFile :: [] -> print_endline (fd_plan initFile goalFile)
+            | _                          -> prerr_endline "Usage: sfp -p <initial_file> <goal_file>"
         )
         else (
             match !files with
