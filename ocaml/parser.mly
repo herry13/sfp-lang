@@ -134,21 +134,21 @@ super
 	|            { EmptySchema }
 
 type_def
-	: COLON ttype { $2 }
-	|             { TUndefined }
-
-ttype
-	: LBRACKET RBRACKET ttype { TVec $3 }
-	| ASTERIX tau             { TRef $2 }
-	| tau                     { TBasic $1 }
+	: COLON tau { $2 }
+	|           { TUndefined }
 
 tau
-	: TBOOL  { TBool }
-	| TINT   { TInt }
-	| TFLOAT { TFloat }
-	| TSTR   { TStr }
-	| TOBJ   { TObject }
-	| ID     { TSchema ($1, TObject) }
+    : TBOOL                 { TBool }
+    | TINT                  { TInt }
+    | TFLOAT                { TFloat }
+    | TSTR                  { TString }
+    | LBRACKET RBRACKET tau { TList $3 }
+    | ASTERIX tau_schema    { TRef $2 }
+    | tau_schema            { TSchema $1 }
+
+tau_schema
+    : TOBJ  { TObject }
+    | ID    { TUserSchema ($1, TObject) }
 
 global
 	: sfp_constraint { $1 }
@@ -220,7 +220,7 @@ params
 	| param              { [$1] }
 
 param
-	: ID COLON ttype { ($1, $3) }
+	: ID COLON tau_schema { ($1, TSchema $3) }
 
 cost
 	: COST EQUAL INT EOS { Cost $3 }

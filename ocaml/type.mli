@@ -6,7 +6,7 @@ open Common
  * type environment
  *******************************************************************)
 
-type map = Syntax._type MapRef.t
+type map = Syntax.t MapRef.t
 
 (*******************************************************************
  * functions of type environment
@@ -18,22 +18,22 @@ val string_of_map : map -> string
 
 val sfpSpecification : ?main:string list -> Syntax.sfp -> map
 
-val type_of : Domain.reference -> map -> Syntax._type
+val type_of : Domain.reference -> map -> Syntax.t
 
-val subtype : Syntax._type -> Syntax._type -> bool
+val subtype : Syntax.t -> Syntax.t -> bool
 
 
 (*******************************************************************
  * a map from type to set of values
  *******************************************************************)
 
-module MapType : Map.S with type key = Syntax._type
+module MapType : Map.S with type key = Syntax.t
 
 type type_values = Domain.SetValue.t MapType.t
 
-val values_of : Syntax._type -> type_values -> Domain.SetValue.t
+val values_of : Syntax.t -> type_values -> Domain.SetValue.t
 
-val add_value : Syntax._type -> Domain.value -> type_values -> type_values
+val add_value : Syntax.t -> Domain.value -> type_values -> type_values
 
 val make_type_values : map -> Domain.flatstore -> map ->
 	Domain.flatstore -> Domain.SetValue.t MapType.t

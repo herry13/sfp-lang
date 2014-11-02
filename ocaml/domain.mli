@@ -49,7 +49,7 @@ and _constraint = Eq of reference * basic
 (** action elements : name * parameters * cost * preconditions * effects **)
 and action         = reference * parameter_type list * cost * _constraint *
                      effect list
-and parameter_type = ident * Syntax._type
+and parameter_type = ident * Syntax.t
 and cost           = int
 and effect         = reference * basic
 

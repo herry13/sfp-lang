@@ -49,7 +49,7 @@ and _constraint = Eq of reference * basic
 (** action elements **)
 and action         = reference * parameter_type list * int * _constraint *
                      effect list
-and parameter_type = ident * Syntax._type
+and parameter_type = ident * Syntax.t
 and cost           = int
 and effect         = reference * basic
 
@@ -213,8 +213,8 @@ let rec get_link store baseReference reference linkReference accumulator =
 		| nsp, value -> (
 				let r = nsp @++ ref in
 				match value with
-				| Val (Link lr) -> get_link store (prefix r) reference lr
-				                       (SetRef.add r accumulator)
+				| Val Link lr
+                | Val Basic Ref lr -> get_link store (prefix r) reference lr (SetRef.add r accumulator)
 				| _ -> if r @<= reference then
 				           error 504 ("implicit cyclic link-reference " ^ !^r)
 				       else
@@ -286,6 +286,12 @@ let rec replace_link store baseReference identifier value baseReference1 =
 					| _         -> sp
 				)
 		)
+    | Basic Ref r ->
+        (
+            match resolve_link store baseReference1 rp (Link r) with
+            | nsp, Val Basic vp -> bind store rp (Basic vp)
+            | _, _ -> store
+        )
 	| Store vs -> accept store rp vs rp
 	| _        -> store
 		
@@ -316,7 +322,7 @@ let rec value_TBD_exists ns store =
  * convert reference (list of string) to string
  *******************************************************************)
 
-let (!^) reference = "$." ^ String.concat "." reference ;;
+(* let (!^) reference = "$." ^ String.concat "." reference ;; *)
 
 let string_of_ref reference = !^reference ;;
 

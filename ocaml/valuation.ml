@@ -186,13 +186,7 @@ and sfpConstraint (c : _constraint) =
 
 (* action *)
 and sfpAction (parameters, cost, conditions, effects) =
-    let get_parameters =
-        List.fold_left (fun acc (id, t) ->
-            match t with
-            | TBasic TInt | TBasic TFloat | TBasic TStr -> Domain.error 1107 ""
-            | _ -> (id, t) :: acc
-        ) [] parameters
-    in
+    let get_parameters = parameters in
     let get_cost =
         match cost with
         | Cost cs   -> int_of_string cs

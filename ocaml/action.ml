@@ -65,12 +65,14 @@ let json_of_parameters buffer parameters =
 	Buffer.add_char buffer '{';
 	let first = ref 1 in
 	MapStr.iter (fun id v ->
-		if !first = 0 then Buffer.add_char buffer ',';
-		Buffer.add_char buffer '"';
-		Buffer.add_string buffer id;
-		Buffer.add_string buffer "\":";
-		Buffer.add_string buffer (Json.of_value (Basic v));
-		first := 0
+        if id <> "this" then (
+    		if !first = 0 then Buffer.add_char buffer ',';
+    		Buffer.add_char buffer '"';
+    		Buffer.add_string buffer id;
+    		Buffer.add_string buffer "\":";
+    		Buffer.add_string buffer (Json.of_value (Basic v));
+    		first := 0
+        )
 	) parameters;
 	Buffer.add_char buffer '}'
 ;;
@@ -488,5 +490,5 @@ let ground_actions typeEnvironment variables typeValues globalConstraints
 			ground_action_of action typeEnvironment variables typeValues
 				addDummy globalImplications actions
 		| _ -> error 811 "not an action" (* a non-action value *)
-	) (Type.values_of (Syntax.TBasic Syntax.TAction) typeValues) actions
+	) (Type.values_of Syntax.TAction typeValues) actions
 ;;

@@ -10,22 +10,22 @@ let error code msg = raise (JsonError (code, msg)) ;;
 
 let (!^) r = String.concat "." r ;;
 
-let of_basic_type t = match t with
-	| Syntax.TBool -> "bool"
-	| Syntax.TInt -> "int"
-	| Syntax.TFloat -> "float"
-	| Syntax.TStr -> "str"
-	| Syntax.TObject -> "object"
-	| Syntax.TSchema (id, _) -> id
-	| _ -> error 1301 "invalid basic type"
-;;
-
 let rec of_type t = match t with
-	| Syntax.TBasic t -> of_basic_type t
-	| Syntax.TVec t -> "[]" ^ (of_type t)
-	| Syntax.TRef t -> "$" ^ (of_basic_type t)
-	| _ -> error 1302 "invalid type"
-;;
+    | Syntax.TBool                              -> "bool"
+    | Syntax.TInt                               -> "int"
+    | Syntax.TFloat                             -> "float"
+    | Syntax.TString                            -> "string"
+    | Syntax.TNull                              -> "null"
+    | Syntax.TAny                               -> "any"
+    | Syntax.TAction                            -> "action"
+    | Syntax.TGlobal                            -> "global"
+    | Syntax.TEnum (id, _)                      -> "%" ^ id
+    | Syntax.TList t                            -> "[]" ^ (of_type t)
+    | Syntax.TSchema Syntax.TObject             -> "object"
+    | Syntax.TSchema Syntax.TUserSchema (id, _) -> id
+    | Syntax.TRef Syntax.TObject                -> "*object"
+    | Syntax.TRef Syntax.TUserSchema (id, _)    -> "*" ^ id
+	| _                                         -> error 1302 "invalid type"
 
 (** private function to generate JSON of basic value **)
 let rec json_basic_value buf v =
@@ -250,18 +250,25 @@ let of_store typeEnv store =
 		let r = Domain.(@+.) ns id in
 		match MapRef.find r typeEnv with
 		| Syntax.TUndefined -> error 1304 ("type of " ^ !^r ^ " is undefined")
-		| Syntax.TBasic Syntax.TSchema (id, Syntax.TRootSchema) ->
-			Buffer.add_string buf "\".type\":\"schema\""
-		| Syntax.TBasic Syntax.TSchema (id, super) -> (
-				Buffer.add_string buf "\".type\":\"schema\",\".super\":\"";
-				Buffer.add_string buf (of_type (Syntax.TBasic super));
-				Buffer.add_char buf '"'
-			)
-		| t -> (
-				Buffer.add_string buf "\".type\":\"";
-				Buffer.add_string buf (of_type t);
-				Buffer.add_char buf '"'
-			)
+        | t when Type.subtype t (Syntax.TSchema Syntax.TRootSchema) ->
+            (
+                match t with
+                | Syntax.TSchema Syntax.TUserSchema (_, Syntax.TRootSchema) ->
+                    Buffer.add_string buf "\".type\":\"schema\""
+                | Syntax.TSchema Syntax.TUserSchema (_, Syntax.TUserSchema (id, _)) ->
+                    (
+                        Buffer.add_string buf "\".type\":\"schema\",\".super\":\"";
+                        Buffer.add_string buf id;
+                        Buffer.add_char buf '"'
+                    )
+                | _ -> ()
+            )
+        | t ->
+            (
+                Buffer.add_string buf "\".type\":\"";
+                Buffer.add_string buf (of_type t);
+                Buffer.add_char buf '"'
+            )
 	in
 	let rec json_store ns s = match s with
 		| [] -> ()
@@ -355,7 +362,9 @@ let of_flatstore flatstore =
 ;;
 
 
-(* TODO *)
+(**
+ * TODO: implement this function that does deserialisation from JSON to SFP.
+ *)
 let to_store json =
 	let typeEnv = MapRef.empty in
 	let store = [] in

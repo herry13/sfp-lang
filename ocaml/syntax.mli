@@ -13,7 +13,7 @@ and  context       = AssignmentContext of assignment * context
 and  block         = AssignmentBlock of assignment * block
                    | GlobalBlock     of _constraint * block
                    | EmptyBlock
-and  assignment    = reference * _type * value
+and  assignment    = reference * t * value
 and  value         = Basic     of basicValue
                    | Link      of reference
                    | Prototype of superSchema * prototype
@@ -43,25 +43,27 @@ and superSchema = SID of string
 and enum = string * string list
 
 (** type syntax **)
-and _type     = TBasic of basicType
-              | TVec   of _type
-              | TRef   of basicType
-                (* link-reference = (r, true)
-                   data-reference = (r, false) *)
-              | TForward of reference * bool
-              | TUndefined
-              | TAny
-and basicType = TBool                         (* (Type Bool)   *)
-              | TInt                          (* (Type Int)    *)
-              | TFloat                        (* (Type Float)  *)
-              | TStr                          (* (Type Str)    *)
-              | TObject                       (* (Type Object) *)
-              | TSchema of string * basicType (* (Type Schema) *)
-              | TNull                         (* (Type Null)   *)
-              | TAction                       (* (Type Action) *)
-              | TGlobal                       (* (Type Global) *)
-              | TRootSchema
-              | TEnum of string * string list (* (Type Enum)   *)
+and t        = TBool
+             | TInt
+             | TFloat
+             | TString
+             | TNull
+             | TUndefined
+             | TAny
+             | TAction
+             | TGlobal
+             | TEnum    of string * string list
+             | TList    of t
+             | TSchema  of tSchema
+             | TRef     of tSchema
+             | TForward of reference * tForward
+    
+and tSchema  = TObject
+             | TRootSchema
+             | TUserSchema of string * tSchema
+    
+and tForward = TLinkForward
+             | TRefForward
 
 (** constraint syntax **)
 and _constraint = Eq           of reference * basicValue
@@ -78,7 +80,7 @@ and _constraint = Eq           of reference * basicValue
 
 (** action syntax **)
 and action     = parameter list * cost * conditions * effect list
-and parameter  = string * _type
+and parameter  = string * t
 and cost       = Cost of string
                | EmptyCost
 and conditions = Condition of _constraint
@@ -91,7 +93,7 @@ and effect     = reference * basicValue
 
 val string_of_sfp : sfp -> string
 
-val string_of_type : _type -> string
+val string_of_type : t -> string
 
 val json_of_sfp : sfp -> string
 

@@ -9,7 +9,7 @@ val of_value : Domain.value -> string
 
 val of_flatstore : Domain.flatstore -> string
 
-val of_type : Syntax._type -> string
+val of_type : Syntax.t -> string
 
 
 val to_store : string -> Type.map * Domain.store
