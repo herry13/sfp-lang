@@ -1,0 +1,24 @@
+include "machine.sfp"
+include "service.sfp"
+
+schema Apache extends Service
+schema Mysql extends Service
+
+// desired state
+hpvm6 isa Machine {
+	address is "hpvm6.diy.inf.ed.ac.uk"
+	web isa Apache
+	db isa Mysql
+}
+
+// mutation
+hpvm6.web.running is true
+
+// goal constraint
+if hpvm6.web.running then hpvm6.db.running
+
+// global constraint
+global {
+	if hpvm6.web.running then hpvm6.db.running
+}
+

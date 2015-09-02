@@ -1,0 +1,36 @@
+#!/usr/bin/env ruby
+
+dir = File.expand_path(File.dirname(__FILE__))
+require "#{dir}/../lib/sfp"
+require 'yaml'
+
+opts = Trollop::options do
+	version "sfp " + File.read("#{dir}/../VERSION").sub(/\n/, '')  + " (c) 2013 Herry"
+	banner <<-EOS
+Parse a SFP file and print the result in JSON format.
+
+Usage:
+       sfp <file>
+EOS
+
+	opt :pretty, "Print the result in pretty JSON format.", :short => '-r'
+	opt :yaml, "Print the result in YAML format.", :short => '-y'
+end
+
+def parse(filepath)
+	home_dir = File.expand_path(File.dirname(filepath))
+	parser = Sfp::Parser.new({:home_dir => home_dir})
+	parser.parse(File.read(filepath))
+	parser
+end
+
+filepath = ARGV[0].to_s
+if filepath != ''
+	if opts[:yaml]
+		puts YAML.dump(JSON[parse(filepath).to_json({:pretty => opts[:pretty]})])
+	else
+		puts parse(filepath).to_json({:pretty => opts[:pretty]})
+	end
+else
+	Trollop::help
+end

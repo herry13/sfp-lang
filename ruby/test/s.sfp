@@ -1,0 +1,14 @@
+
+
+b
+
+a {
+	x is true
+	refer is b
+}
+
+a.x is false
+
+a.refer is null
+
+

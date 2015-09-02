@@ -1,0 +1,41 @@
+include "service-schemas.sfp"
+
+// generate all possible states with constraint solver
+initial state {
+	cloud1 isa Cloud {
+		running either ( true, false )
+	}
+	cloud2 isa Cloud {
+		running either ( true, false )
+	}
+
+	vm1 isa VM
+	vm2 isa VM
+	vm3 isa VM
+
+	lb isa Service
+	ws isa Service
+	db isa Service
+}
+
+goal constraint {
+	lb {
+		running is true
+		on_machine is vm1
+	}
+
+	ws {
+		running is true
+		on_machine is vm2
+	}
+
+	db {
+		running is true
+		on_machine is vm3
+	}
+}
+
+global constraint {
+	if lb.running then ws.running
+	if ws.running then db.running
+}

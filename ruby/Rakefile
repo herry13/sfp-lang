@@ -1,0 +1,32 @@
+def name
+	@name ||= Dir['*.gemspec'].first.split('.').first
+end
+
+def version
+	File.read('VERSION').strip
+end
+
+def date
+	Date.today.to_s
+end
+
+def gemspec_file
+	"#{name}-#{version}.gem"
+end
+
+def sfp
+	File.dirname(__FILE__) + '/bin/sfp'
+end
+
+def testfiles
+	File.read(File.dirname(__FILE__) + '/test/files').split("\n")
+end
+
+task :default => :test
+
+namespace :test do
+	dir = File.dirname(__FILE__) + '/test'
+	testfiles.each do |file|
+		sh("#{sfp} #{dir}/#{file}")
+	end
+end

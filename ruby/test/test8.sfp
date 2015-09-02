@@ -1,0 +1,18 @@
+a {
+	x = 1
+}
+
+b extends a {
+	c {
+		y = 2
+	}
+	c.y = 4
+
+	d = a.x
+	e = this.c.y
+	f = root.a.x
+	g = parent.a.x
+}
+a.x = 3
+b.c.y = 6
+

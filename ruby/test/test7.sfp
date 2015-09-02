@@ -1,0 +1,17 @@
+
+global {
+	z = 4
+}
+
+
+sometime { //adfdsfretert { // sometime {
+	x = 1
+}
+
+
+global {
+
+	y = 3
+}
+
+
